@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 interface SearchFormProps {
-  onSearch: (query: string, risk: string, platform: string, sort: string) => void
+  onSearch: (query: string, risk: string, platform: string, sort: string, field: string) => void
 }
 
 export function SearchForm({ onSearch }: SearchFormProps) {
@@ -11,24 +11,34 @@ export function SearchForm({ onSearch }: SearchFormProps) {
   const [risk, setRisk] = useState('')
   const [platform, setPlatform] = useState('')
   const [sort, setSort] = useState('created_at')
+  const [field, setField] = useState('')
 
   const handleSearch = () => {
-    onSearch(query, risk, platform, sort)
+    onSearch(query, risk, platform, sort, field)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleSearch()
   }
 
-  const platforms = ['Amazon', 'eBay', 'Shopify', 'AliExpress', 'Wish']
+  const platforms = ['Amazon', 'eBay', 'Shopify', 'AliExpress', 'Wish', 'Alibaba']
 
   return (
     <div className="mb-8">
       {/* 搜索栏 */}
       <div className="flex flex-col md:flex-row gap-3 mb-4">
         <div className="flex-1 flex gap-2">
-          <select className="px-4 py-3 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-300 text-sm">
-            <option>全部字段</option>
+          <select
+            value={field}
+            onChange={(e) => { setField(e.target.value); onSearch(query, risk, platform, sort, e.target.value); }}
+            className="px-4 py-3 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-300 text-sm focus:outline-none"
+          >
+            <option value="">全部字段</option>
+            <option value="name">买家姓名</option>
+            <option value="platform">平台 / ID</option>
+            <option value="email">邮箱地址</option>
+            <option value="phone">电话号码</option>
+            <option value="address">收货地址</option>
           </select>
           <input
             placeholder="输入买家姓名、邮箱、电话或地址进行查询..."
@@ -54,7 +64,7 @@ export function SearchForm({ onSearch }: SearchFormProps) {
         {platforms.map((p) => (
           <button
             key={p}
-            onClick={() => { setPlatform(p); onSearch(query, risk, p, sort); }}
+            onClick={() => { setPlatform(p); onSearch(query, risk, p, sort, field); }}
             className={`
               px-4 py-2 rounded-lg text-sm font-medium transition
               ${platform === p
@@ -67,7 +77,7 @@ export function SearchForm({ onSearch }: SearchFormProps) {
           </button>
         ))}
         <button
-          onClick={() => { setPlatform(''); onSearch(query, risk, '', sort); }}
+          onClick={() => { setPlatform(''); onSearch(query, risk, '', sort, field); }}
           className={`
             px-4 py-2 rounded-lg text-sm font-medium transition
             ${platform === ''
@@ -89,7 +99,7 @@ export function SearchForm({ onSearch }: SearchFormProps) {
         <div className="flex gap-2">
           <select
             value={risk}
-            onChange={(e) => { setRisk(e.target.value); onSearch(query, e.target.value, platform, sort); }}
+            onChange={(e) => { setRisk(e.target.value); onSearch(query, e.target.value, platform, sort, field); }}
             className="px-4 py-2 bg-[#1a1d27] border border-gray-700 rounded-lg text-sm text-gray-300 focus:outline-none"
           >
             <option value="">全部风险</option>
@@ -99,7 +109,7 @@ export function SearchForm({ onSearch }: SearchFormProps) {
           </select>
           <select
             value={sort}
-            onChange={(e) => { setSort(e.target.value); onSearch(query, risk, platform, e.target.value); }}
+            onChange={(e) => { setSort(e.target.value); onSearch(query, risk, platform, e.target.value, field); }}
             className="px-4 py-2 bg-[#1a1d27] border border-gray-700 rounded-lg text-sm text-gray-300 focus:outline-none"
           >
             <option value="created_at">最新优先</option>

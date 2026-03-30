@@ -39,6 +39,7 @@ export function DetailModal({ item, open, onClose, onReport }: DetailModalProps)
       'Shopify': { border: '#96bf48', color: '#96bf48', bg: 'rgba(150,191,72,0.08)' },
       'AliExpress': { border: '#ff4c00', color: '#ff4c00', bg: 'rgba(255,76,0,0.08)' },
       'Wish': { border: '#a56eff', color: '#a56eff', bg: 'rgba(165,110,255,0.08)' },
+      'Alibaba': { border: '#ff6a00', color: '#ff6a00', bg: 'rgba(255,106,0,0.08)' },
     }
     const c = colors[platform] || { border: '#2e3350', color: '#8b90a7', bg: '#22263a' }
     return (

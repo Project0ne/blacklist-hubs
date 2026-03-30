@@ -98,6 +98,7 @@ export default function HomePage() {
   const [riskFilter, setRiskFilter] = useState('')
   const [platformFilter, setPlatformFilter] = useState('')
   const [sortBy, setSortBy] = useState('created_at')
+  const [searchField, setSearchField] = useState('')
   const [selectedMergedItem, setSelectedMergedItem] = useState<MergedBlacklistItem | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
@@ -127,7 +128,13 @@ export default function HomePage() {
       if (riskFilter) query = query.eq('risk', riskFilter)
       if (platformFilter) query = query.eq('platform', platformFilter)
       if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`)
+        if (searchField === 'platform') {
+          query = query.or(`platform.ilike.%${searchQuery}%,platform_id.ilike.%${searchQuery}%`)
+        } else if (searchField) {
+          query = query.ilike(searchField, `%${searchQuery}%`)
+        } else {
+          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`)
+        }
       }
 
       const { data, error } = await query
@@ -195,18 +202,19 @@ export default function HomePage() {
       loadData()
       loadStats()
     }
-  }, [dbStatus, searchQuery, riskFilter, platformFilter, sortBy])
+  }, [dbStatus, searchQuery, riskFilter, platformFilter, sortBy, searchField])
 
   // 当筛选变化时重置页码
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, riskFilter, platformFilter, sortBy])
+  }, [searchQuery, riskFilter, platformFilter, sortBy, searchField])
 
-  const handleSearch = (query: string, risk: string, platform: string, sort: string) => {
+  const handleSearch = (query: string, risk: string, platform: string, sort: string, field: string) => {
     setSearchQuery(query)
     setRiskFilter(risk)
     setPlatformFilter(platform)
     setSortBy(sort)
+    setSearchField(field)
   }
 
   const handleViewDetail = (item: MergedBlacklistItem) => {

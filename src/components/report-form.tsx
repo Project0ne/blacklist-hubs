@@ -182,6 +182,7 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange, supple
                   <option value="Shopify">Shopify</option>
                   <option value="AliExpress">AliExpress</option>
                   <option value="Wish">Wish</option>
+                  <option value="Alibaba">Alibaba</option>
                   <option value="Etsy">Etsy</option>
                   <option value="Walmart">Walmart</option>
                   <option value="Shopee">Shopee</option>
