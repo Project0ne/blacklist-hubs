@@ -140,7 +140,7 @@ export default function HomePage() {
           totalPages={totalPages}
           totalRows={totalRows}
           onPageChange={setCurrentPage}
-          onViewDetail={() => {}}
+          onViewDetail={(item) => console.log(item)}
         />
       </main>
 
