@@ -179,7 +179,7 @@ export function AdminPanel() {
       const { error } = await supabase
         .from('blacklist')
         .update({ status, reviewed_at: new Date().toISOString() })
-        .in('id', [...selectedIds])
+        .in('id', Array.from(selectedIds))
 
       if (error) throw error
 
@@ -197,7 +197,7 @@ export function AdminPanel() {
     if (!confirm(`确认删除选中的 ${selectedIds.size} 条记录？此操作不可恢复。`)) return
 
     try {
-      const { error } = await supabase.from('blacklist').delete().in('id', [...selectedIds])
+      const { error } = await supabase.from('blacklist').delete().in('id', Array.from(selectedIds))
       if (error) throw error
 
       alert(`已删除 ${selectedIds.size} 条`)
