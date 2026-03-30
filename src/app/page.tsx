@@ -89,7 +89,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#0f1117]">
       {/* Header */}
-      <header className="border-b border-gray-800/50 bg-[#0f1117]/95 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-gray-800/50 bg-[#0f1117]/95 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">

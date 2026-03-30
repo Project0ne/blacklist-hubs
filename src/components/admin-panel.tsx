@@ -472,7 +472,7 @@ export function AdminPanel() {
 
       {/* Detail Modal */}
       {selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setSelectedItem(null)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setSelectedItem(null)}>
           <div className="bg-[#161822] border border-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-[#161822]/95 backdrop-blur-sm border-b border-gray-800 p-5 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white">📋 审核 — {selectedItem.name}</h2>
@@ -511,7 +511,7 @@ export function AdminPanel() {
 
       {/* Reject Dialog */}
       {showRejectDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
           <div className="w-[400px] bg-[#161822] border border-gray-800 rounded-2xl p-6">
             <h2 className="text-lg font-bold text-white mb-4">驳回原因</h2>
             <textarea
