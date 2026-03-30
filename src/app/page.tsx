@@ -14,6 +14,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [totalRows, setTotalRows] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
   const [riskFilter, setRiskFilter] = useState('')
   const [platformFilter, setPlatformFilter] = useState('')
@@ -45,6 +46,7 @@ export default function HomePage() {
 
       setItems(data || [])
       setTotalPages(Math.ceil((count || 0) / PAGE_SIZE))
+      setTotalRows(count || 0)
     } catch (error) {
       console.error('加载数据失败:', error)
     } finally {
@@ -136,7 +138,9 @@ export default function HomePage() {
           loading={loading}
           currentPage={currentPage}
           totalPages={totalPages}
+          totalRows={totalRows}
           onPageChange={setCurrentPage}
+          onViewDetail={() => {}}
         />
       </main>
 
