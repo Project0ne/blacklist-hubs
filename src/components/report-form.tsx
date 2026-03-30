@@ -31,7 +31,10 @@ export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
       }
 
       try {
-        const fileName = `evidence/${Date.now()}_${file.name}`
+        // 安全处理文件名：移除中文字符和特殊字符，只保留字母数字和点
+        const ext = file.name.split('.').pop() || 'jpg'
+        const safeName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+        const fileName = `evidence/${safeName}`
         const { error } = await supabase.storage.from('evidence-images').upload(fileName, file)
         if (error) throw error
 

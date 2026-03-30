@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '文件大小超过5MB限制' }, { status: 400 })
     }
 
-    const fileName = `evidence/${Date.now()}_${file.name}`
+    // 安全处理文件名：使用纯字母数字
+    const ext = file.name.split('.').pop() || 'jpg'
+    const safeName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+    const fileName = `evidence/${safeName}`
     const { error } = await supabase.storage
       .from('evidence-images')
       .upload(fileName, file)
