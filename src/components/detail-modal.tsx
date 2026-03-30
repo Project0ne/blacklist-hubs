@@ -1,158 +1,137 @@
 'use client'
 
-import { BlacklistItem } from '@/types'
-import { formatCurrency, formatDate } from '@/lib/utils'
+interface BlacklistItem {
+  id: number
+  name: string
+  platform?: string
+  platform_id?: string
+  email: string
+  phone?: string
+  address?: string
+  risk: '高' | '中' | '低'
+  dispute_type?: string
+  description?: string
+  report_count: number
+  related_emails?: string[]
+  created_at: string
+}
 
 interface DetailModalProps {
-  item: BlacklistItem
   open: boolean
   onClose: () => void
+  item: BlacklistItem | null
+  onReport: () => void
 }
 
-export function DetailModal({ item, open, onClose }: DetailModalProps) {
-  if (!open) return null
+export function DetailModal({ open, onClose, item, onReport }: DetailModalProps) {
+  if (!open || !item) return null
 
-  const getRiskBadge = (risk: string) => {
-    const styles: Record<string, string> = {
-      '高': 'bg-red-500/20 text-red-400 border-red-500/30',
-      '中': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      '低': 'bg-green-500/20 text-green-400 border-green-500/30',
-    }
-    const colors: Record<string, string> = { '高': 'bg-red-500', '中': 'bg-yellow-500', '低': 'bg-green-500' }
-    return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${styles[risk] || ''}`}>
-        <span className={`w-2 h-2 rounded-full ${colors[risk] || ''}`} />
-        {risk}风险
-      </span>
-    )
+  function platformClass(p?: string) {
+    return { Amazon: 'platform-amazon', eBay: 'platform-ebay', Shopify: 'platform-shopify', AliExpress: 'platform-aliexpress', Wish: 'platform-wish' }[p || ''] || ''
   }
 
-  const relatedCount = (item.related_emails?.length || 0) + (item.related_phones?.length || 0)
+  function riskClass(r: string) {
+    return { '高': 'risk-high', '中': 'risk-mid', '低': 'risk-low' }[r] || 'risk-low'
+  }
+
+  function riskLabel(r: string) {
+    return { '高': '🔴 高风险', '中': '🔶 中风险', '低': '⚠️ 低风险' }[r] || r
+  }
+
+  function fmtDate(d?: string) {
+    if (!d) return '-'
+    return d.slice ? d.slice(0, 10) : new Date(d).toISOString().slice(0, 10)
+  }
+
+  const related = item.related_emails || []
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-[#161822] border border-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 bg-[#161822]/95 backdrop-blur-sm border-b border-gray-800 p-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">{item.name}</h2>
-              <p className="text-xs text-gray-500">买家详情</p>
+    <div className="modal-overlay show" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title">🔴 买家详情 — {item.name}</div>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body">
+          <div className="detail-section">
+            <div className="detail-section-title">基本信息</div>
+            <div className="detail-grid">
+              <div className="detail-item">
+                <div className="key">买家姓名</div>
+                <div className="val">{item.name}</div>
+              </div>
+              <div className="detail-item">
+                <div className="key">风险等级</div>
+                <div className="val"><span className={`risk-badge ${riskClass(item.risk)}`}>{riskLabel(item.risk)}</span></div>
+              </div>
+              <div className="detail-item">
+                <div className="key">平台</div>
+                <div className="val">
+                  <span className={`platform-tag ${platformClass(item.platform)}`}>{item.platform || '—'}</span>
+                  {item.platform_id ? ` ${item.platform_id}` : ''}
+                </div>
+              </div>
+              <div className="detail-item">
+                <div className="key">纠纷类型</div>
+                <div className="val">{item.dispute_type || '—'}</div>
+              </div>
+              <div className="detail-item">
+                <div className="key">举报次数</div>
+                <div className="val">{item.report_count || 1} 次</div>
+              </div>
+              <div className="detail-item">
+                <div className="key">最近举报</div>
+                <div className="val">{fmtDate(item.created_at)}</div>
+              </div>
             </div>
           </div>
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-700 text-gray-400 hover:border-gray-600 hover:text-white transition">
-            ×
-          </button>
-        </div>
 
-        <div className="p-6 space-y-6">
-          {/* 基本信息 */}
-          <section>
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">基本信息</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <InfoField label="风险等级" value={getRiskBadge(item.risk)} />
-              <InfoField label="平台" value={item.platform || '-'} />
-              <InfoField label="平台 ID" value={item.platform_id || '-'} />
-              <InfoField label="纠纷类型" value={item.dispute_type || '-'} />
-              <InfoField label="举报次数" value={`${item.report_count || 1} 次`} />
-              <InfoField label="最近举报" value={formatDate(item.created_at)} />
-            </div>
-          </section>
-
-          {/* 联系信息 */}
-          <section>
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">联系与地址</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <InfoField label="邮箱地址" value={item.email} />
-              <InfoField label="电话号码" value={item.phone || '未提供'} />
-              <div className="col-span-2">
-                <InfoField label="收货地址" value={`${item.address || '未提供'}${item.zip_code ? ` (${item.zip_code})` : ''}`} />
+          <div className="detail-section">
+            <div className="detail-section-title">联系与地址</div>
+            <div className="detail-grid">
+              <div className="detail-item">
+                <div className="key">邮箱地址</div>
+                <div className="val">{item.email}</div>
+              </div>
+              <div className="detail-item">
+                <div className="key">电话号码</div>
+                <div className="val">{item.phone || '未提供'}</div>
+              </div>
+              <div className="detail-item full">
+                <div className="key">收货地址</div>
+                <div className="val">{item.address || '未提供'}</div>
               </div>
             </div>
-          </section>
+          </div>
 
-          {/* 金额信息 */}
-          <section>
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">金额信息</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <InfoField label="总订单金额" value={formatCurrency(item.order_amount)} />
-              <InfoField label="退款/拒付金额" value={formatCurrency(item.refund_amount)} highlight />
-              <InfoField label="威胁拒付金额" value={formatCurrency(item.partial_refund_amount)} />
-              <InfoField label="是否有货物损失" value={item.has_cargo_loss ? '是' : '否'} />
-              {item.has_cargo_loss && (
-                <>
-                  <InfoField label="货物损失金额" value={formatCurrency(item.cargo_loss_amount)} />
-                  <InfoField label="损失承担方" value={item.loss_bearer || '未填写'} />
-                </>
-              )}
-            </div>
-          </section>
-
-          {/* 证据图片 */}
-          {item.evidence_images && item.evidence_images.length > 0 && (
-            <section>
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">证据截图</h3>
-              <div className="flex gap-3 flex-wrap">
-                {item.evidence_images.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    className="w-24 h-24 object-cover rounded-lg border border-gray-700 cursor-pointer hover:border-red-500/50 transition"
-                    onClick={() => window.open(url)}
-                  />
+          {related.length > 0 && (
+            <div className="detail-section">
+              <div className="detail-section-title">关联账号</div>
+              <div className="related-tags">
+                {related.map((email, i) => (
+                  <span key={i} className="related-tag">🔗 {email}</span>
                 ))}
               </div>
-            </section>
-          )}
-
-          {/* 关联信息 */}
-          {relatedCount > 1 && (
-            <section>
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">关联信息（共 {relatedCount} 条记录）</h3>
-              <div className="space-y-2">
-                {item.related_emails && item.related_emails.length > 0 && (
-                  <div className="p-3 bg-[#1a1d27] rounded-lg border border-gray-800">
-                    <div className="text-xs text-gray-500 mb-1">关联邮箱</div>
-                    <div className="text-sm text-gray-300">{item.related_emails.join(', ')}</div>
-                  </div>
-                )}
-                {item.related_phones && item.related_phones.length > 0 && (
-                  <div className="p-3 bg-[#1a1d27] rounded-lg border border-gray-800">
-                    <div className="text-xs text-gray-500 mb-1">关联手机</div>
-                    <div className="text-sm text-gray-300">{item.related_phones.join(', ')}</div>
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* 举报内容 */}
-          <section>
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">举报内容</h3>
-            <div className="p-4 bg-[#1a1d27] rounded-lg border border-gray-800">
-              <div className="flex justify-between text-xs text-gray-500 mb-2">
-                <span>举报说明</span>
-                <span>{formatDate(item.created_at)}</span>
-              </div>
-              <p className="text-gray-300 leading-relaxed">{item.description || '-'}</p>
             </div>
-          </section>
-        </div>
-      </div>
-    </div>
-  )
-}
+          )}
 
-function InfoField({ label, value, highlight }: { label: string; value: React.ReactNode; highlight?: boolean }) {
-  return (
-    <div className="p-3 bg-[#1a1d27] rounded-lg border border-gray-800/50">
-      <div className="text-xs text-gray-500 mb-1">{label}</div>
-      <div className={`text-sm ${highlight ? 'text-red-400' : 'text-gray-200'}`}>
-        {value}
+          <div className="detail-section">
+            <div className="detail-section-title">举报内容</div>
+            <div className="reports-timeline">
+              <div className="report-item">
+                <div className="report-item-header">
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)' }}>举报说明</span>
+                  <span className="report-item-date">{fmtDate(item.created_at)}</span>
+                </div>
+                <div className="report-item-body">{item.description || '—'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn-cancel" onClick={onClose}>关闭</button>
+          <button className="btn-submit" onClick={onReport}>补充举报</button>
+        </div>
       </div>
     </div>
   )
