@@ -1,57 +1,67 @@
 'use client'
 
-import { useState } from 'react'
 import { BlacklistItem } from '@/types'
-import { DetailModal } from '@/components/detail-modal'
-import { formatCurrency, formatDate, maskEmail, maskPhone, maskAddress } from '@/lib/utils'
+import { formatDate, maskEmail, maskPhone, maskAddress } from '@/lib/utils'
 
 interface BlacklistTableProps {
   items: BlacklistItem[]
   loading: boolean
   currentPage: number
   totalPages: number
+  totalRows: number
   onPageChange: (page: number) => void
+  onViewDetail: (item: BlacklistItem) => void
 }
 
-export function BlacklistTable({ items, loading, currentPage, totalPages, onPageChange }: BlacklistTableProps) {
-  const [selectedItem, setSelectedItem] = useState<BlacklistItem | null>(null)
-
+export function BlacklistTable({ items, loading, currentPage, totalPages, totalRows, onPageChange, onViewDetail }: BlacklistTableProps) {
   const getRiskBadge = (risk: string) => {
-    const styles: Record<string, string> = {
-      '高': 'bg-red-500/20 text-red-400 border-red-500/30',
-      '中': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      '低': 'bg-green-500/20 text-green-400 border-green-500/30',
+    const styles: Record<string, { bg: string; color: string; border: string; label: string }> = {
+      '高': { bg: 'rgba(232,64,64,0.15)', color: '#ff6b6b', border: 'rgba(232,64,64,0.3)', label: '🔴 高风险' },
+      '中': { bg: 'rgba(245,166,35,0.12)', color: '#f5a623', border: 'rgba(245,166,35,0.3)', label: '🔶 中风险' },
+      '低': { bg: 'rgba(46,204,113,0.1)', color: '#2ecc71', border: 'rgba(46,204,113,0.2)', label: '⚠️ 低风险' },
     }
-    const colors: Record<string, string> = { '高': 'bg-red-500', '中': 'bg-yellow-500', '低': 'bg-green-500' }
+    const s = styles[risk] || styles['低']
     return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${styles[risk] || ''}`}>
-        <span className={`w-2 h-2 rounded-full ${colors[risk] || ''}`} />
-        {risk}风险
+      <span
+        className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-[20px] text-[11px] font-bold"
+        style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}
+      >
+        {s.label}
       </span>
     )
   }
 
   const getPlatformBadge = (platform: string | undefined) => {
-    if (!platform) return <span className="text-gray-500">-</span>
-    const colors: Record<string, string> = {
-      'Amazon': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-      'eBay': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      'Shopify': 'bg-green-500/20 text-green-400 border-green-500/30',
-      'AliExpress': 'bg-red-500/20 text-red-400 border-red-500/30',
-      'Wish': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    if (!platform) return <span style={{ color: '#8b90a7' }}>—</span>
+    const colors: Record<string, { border: string; color: string; bg: string }> = {
+      'Amazon': { border: '#f90', color: '#f90', bg: 'rgba(255,153,0,0.08)' },
+      'eBay': { border: '#4a90e2', color: '#4a90e2', bg: 'rgba(74,144,226,0.08)' },
+      'Shopify': { border: '#96bf48', color: '#96bf48', bg: 'rgba(150,191,72,0.08)' },
+      'AliExpress': { border: '#ff4c00', color: '#ff4c00', bg: 'rgba(255,76,0,0.08)' },
+      'Wish': { border: '#a56eff', color: '#a56eff', bg: 'rgba(165,110,255,0.08)' },
     }
+    const c = colors[platform] || { border: '#2e3350', color: '#8b90a7', bg: '#22263a' }
     return (
-      <span className={`inline-block px-2 py-1 rounded text-xs font-medium border ${colors[platform] || 'border-gray-500 text-gray-400'}`}>
+      <span
+        className="inline-block px-2 py-0.5 rounded text-[11px]"
+        style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color }}
+      >
         {platform}
       </span>
     )
   }
 
-  const getRelatedBadge = (item: BlacklistItem) => {
-    const count = (item.related_emails?.length || 0) + (item.related_phones?.length || 0)
-    if (count <= 1) return <span className="text-gray-500">-</span>
+  const getReportCountBadge = (count: number) => {
+    const style = count >= 5
+      ? { bg: 'rgba(232,64,64,0.2)', color: '#ff6b6b' }
+      : count >= 3
+        ? { bg: 'rgba(245,166,35,0.2)', color: '#f5a623' }
+        : { bg: 'rgba(139,144,167,0.15)', color: '#8b90a7' }
     return (
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-bold">
+      <span
+        className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-[11px] font-bold"
+        style={{ background: style.bg, color: style.color }}
+      >
         {count}
       </span>
     )
@@ -59,113 +69,151 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, onPage
 
   if (loading) {
     return (
-      <div className="bg-[#161822] border border-gray-800/50 rounded-xl p-6">
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-14 bg-gray-800/30 rounded-lg animate-pulse" />
-          ))}
-        </div>
+      <div style={{ background: '#1a1d27', border: '1px solid #2e3350', borderRadius: 10, overflow: 'hidden' }}>
+        <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#22263a' }}>
+              {['#', '买家姓名', '平台 / ID', '邮箱地址', '电话号码', '收货地址', '风险等级', '举报次数', '最近时间', '操作'].map(h => (
+                <th key={h} className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: '#8b90a7', letterSpacing: '0.5px' }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[...Array(5)].map((_, i) => (
+              <tr key={i}>
+                {[...Array(10)].map((_, j) => (
+                  <td key={j} className="px-4 py-4">
+                    <div className="skeleton-bar" style={{ width: '80%' }} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     )
   }
 
   return (
-    <>
-      <div className="bg-[#161822] border border-gray-800/50 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#1a1d27]/50 border-b border-gray-800/50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">#</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">买家姓名</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">平台 / ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">邮箱地址</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">电话号码</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">风险等级</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">举报次数</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">最近时间</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">操作</th>
+    <div style={{ background: '#1a1d27', border: '1px solid #2e3350', borderRadius: 10, overflow: 'hidden' }}>
+      <div className="overflow-x-auto">
+        <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#22263a' }}>
+              {['#', '买家姓名', '平台 / ID', '邮箱地址', '电话号码', '收货地址', '风险等级', '举报次数', '最近时间', '操作'].map(h => (
+                <th key={h} className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: '#8b90a7', letterSpacing: '0.5px' }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan={10} className="text-center py-16" style={{ color: '#8b90a7' }}>
+                  <div className="text-4xl mb-2">🔍</div>
+                  <div className="font-bold" style={{ color: '#e8eaf0' }}>未找到相关记录</div>
+                  <p className="text-sm mt-1.5">尝试其他关键词，或提交新的举报</p>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="text-center py-16 text-gray-500">
-                    <div className="text-4xl mb-2">🔍</div>
-                    <div>未找到相关记录</div>
+            ) : (
+              items.map((item, index) => (
+                <tr
+                  key={item.id}
+                  className="transition-colors duration-150"
+                  style={{ borderTop: '1px solid #2e3350' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <td className="px-4 py-3.5 text-xs" style={{ color: '#8b90a7' }}>
+                    {(currentPage - 1) * 10 + index + 1}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <strong style={{ color: '#e8eaf0' }}>{item.name}</strong>
+                    <br />
+                    <span className="text-[11px]" style={{ color: '#8b90a7' }}>{item.dispute_type || ''}</span>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    {getPlatformBadge(item.platform)}
+                    {item.platform_id && (
+                      <span className="block text-[11px] mt-1" style={{ color: '#8b90a7' }}>{item.platform_id}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 text-sm">
+                    <span className="masked" onClick={() => onViewDetail(item)} style={{ color: '#e8eaf0' }}>
+                      {maskEmail(item.email)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5 text-sm">
+                    <span className="masked" onClick={() => onViewDetail(item)} style={{ color: '#8b90a7' }}>
+                      {maskPhone(item.phone)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5 text-sm" style={{ maxWidth: 160 }}>
+                    <span className="masked" onClick={() => onViewDetail(item)} style={{ color: '#8b90a7' }}>
+                      {maskAddress(item.address)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5">{getRiskBadge(item.risk)}</td>
+                  <td className="px-4 py-3.5">{getReportCountBadge(item.report_count || 1)}</td>
+                  <td className="px-4 py-3.5 text-xs" style={{ color: '#8b90a7' }}>
+                    {formatDate(item.created_at)}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <button
+                      onClick={() => onViewDetail(item)}
+                      className="px-3 py-1 rounded text-xs cursor-pointer transition-all duration-200"
+                      style={{ background: 'transparent', border: '1px solid #2e3350', color: '#8b90a7' }}
+                      onMouseEnter={e => { (e.target as HTMLElement).style.borderColor = '#e84040'; (e.target as HTMLElement).style.color = '#ff6b6b' }}
+                      onMouseLeave={e => { (e.target as HTMLElement).style.borderColor = '#2e3350'; (e.target as HTMLElement).style.color = '#8b90a7' }}
+                    >
+                      详情
+                    </button>
                   </td>
                 </tr>
-              ) : (
-                items.map((item, index) => (
-                  <tr key={item.id} className="border-t border-gray-800/30 hover:bg-gray-800/20 transition">
-                    <td className="px-4 py-4 text-sm text-gray-500">{(currentPage - 1) * 10 + index + 1}</td>
-                    <td className="px-4 py-4">
-                      <div className="font-medium text-white">{item.name}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{item.dispute_type}</div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div>{getPlatformBadge(item.platform)}</div>
-                      {item.platform_id && (
-                        <div className="text-xs text-gray-500 mt-1">{item.platform_id}</div>
-                      )}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-300">{maskEmail(item.email)}</td>
-                    <td className="px-4 py-4 text-sm text-gray-400">{maskPhone(item.phone)}</td>
-                    <td className="px-4 py-4">{getRiskBadge(item.risk)}</td>
-                    <td className="px-4 py-4">{getRelatedBadge(item)}</td>
-                    <td className="px-4 py-4 text-sm text-gray-400">{formatDate(item.created_at)}</td>
-                    <td className="px-4 py-4">
-                      <button
-                        onClick={() => setSelectedItem(item)}
-                        className="px-4 py-1.5 text-sm border border-gray-700 rounded-lg text-gray-300 hover:border-red-500 hover:text-red-400 transition"
-                      >
-                        详情
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* 分页 */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 p-4 border-t border-gray-800/50">
-            <button
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="w-10 h-10 flex items-center justify-center border border-gray-700 rounded-lg text-gray-400 hover:border-red-500 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition"
-            >
-              ‹
-            </button>
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => onPageChange(i + 1)}
-                className={`w-10 h-10 flex items-center justify-center rounded-lg transition ${
-                  currentPage === i + 1
-                    ? 'bg-red-500 text-white'
-                    : 'border border-gray-700 text-gray-400 hover:border-red-500'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="w-10 h-10 flex items-center justify-center border border-gray-700 rounded-lg text-gray-400 hover:border-red-500 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition"
-            >
-              ›
-            </button>
-          </div>
-        )}
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {selectedItem && (
-        <DetailModal item={selectedItem} open={!!selectedItem} onClose={() => setSelectedItem(null)} />
+      {/* 分页 */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1.5 p-5" style={{ borderTop: '1px solid #2e3350' }}>
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="w-8 h-8 rounded flex items-center justify-center text-sm cursor-pointer transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ background: 'transparent', border: '1px solid #2e3350', color: '#8b90a7' }}
+          >
+            ‹
+          </button>
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i}
+              onClick={() => onPageChange(i + 1)}
+              className="w-8 h-8 rounded flex items-center justify-center text-sm cursor-pointer transition-all duration-200"
+              style={{
+                background: currentPage === i + 1 ? '#e84040' : 'transparent',
+                border: `1px solid ${currentPage === i + 1 ? '#e84040' : '#2e3350'}`,
+                color: currentPage === i + 1 ? '#fff' : '#8b90a7',
+              }}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="w-8 h-8 rounded flex items-center justify-center text-sm cursor-pointer transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ background: 'transparent', border: '1px solid #2e3350', color: '#8b90a7' }}
+          >
+            ›
+          </button>
+        </div>
       )}
-    </>
+    </div>
   )
 }

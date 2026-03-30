@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { BlacklistItem } from '@/types'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 interface DetailModalProps {
   item: BlacklistItem
@@ -10,149 +11,217 @@ interface DetailModalProps {
 }
 
 export function DetailModal({ item, open, onClose }: DetailModalProps) {
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   if (!open) return null
 
   const getRiskBadge = (risk: string) => {
-    const styles: Record<string, string> = {
-      '高': 'bg-red-500/20 text-red-400 border-red-500/30',
-      '中': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      '低': 'bg-green-500/20 text-green-400 border-green-500/30',
+    const styles: Record<string, { bg: string; color: string; border: string; label: string }> = {
+      '高': { bg: 'rgba(232,64,64,0.15)', color: '#ff6b6b', border: 'rgba(232,64,64,0.3)', label: '🔴 高风险' },
+      '中': { bg: 'rgba(245,166,35,0.12)', color: '#f5a623', border: 'rgba(245,166,35,0.3)', label: '🔶 中风险' },
+      '低': { bg: 'rgba(46,204,113,0.1)', color: '#2ecc71', border: 'rgba(46,204,113,0.2)', label: '⚠️ 低风险' },
     }
-    const colors: Record<string, string> = { '高': 'bg-red-500', '中': 'bg-yellow-500', '低': 'bg-green-500' }
+    const s = styles[risk] || styles['低']
     return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${styles[risk] || ''}`}>
-        <span className={`w-2 h-2 rounded-full ${colors[risk] || ''}`} />
-        {risk}风险
+      <span
+        className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-[20px] text-[11px] font-bold"
+        style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}
+      >
+        {s.label}
       </span>
     )
   }
 
-  const relatedCount = (item.related_emails?.length || 0) + (item.related_phones?.length || 0)
+  const getPlatformBadge = (platform: string | undefined) => {
+    if (!platform) return <span style={{ color: '#8b90a7' }}>—</span>
+    const colors: Record<string, { border: string; color: string; bg: string }> = {
+      'Amazon': { border: '#f90', color: '#f90', bg: 'rgba(255,153,0,0.08)' },
+      'eBay': { border: '#4a90e2', color: '#4a90e2', bg: 'rgba(74,144,226,0.08)' },
+      'Shopify': { border: '#96bf48', color: '#96bf48', bg: 'rgba(150,191,72,0.08)' },
+      'AliExpress': { border: '#ff4c00', color: '#ff4c00', bg: 'rgba(255,76,0,0.08)' },
+      'Wish': { border: '#a56eff', color: '#a56eff', bg: 'rgba(165,110,255,0.08)' },
+    }
+    const c = colors[platform] || { border: '#2e3350', color: '#8b90a7', bg: '#22263a' }
+    return (
+      <span
+        className="inline-block px-2 py-0.5 rounded text-[11px]"
+        style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color }}
+      >
+        {platform}
+      </span>
+    )
+  }
+
+  const relatedEmails = item.related_emails || []
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-[#161822] border border-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 bg-[#161822]/95 backdrop-blur-sm border-b border-gray-800 p-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">{item.name}</h2>
-              <p className="text-xs text-gray-500">买家详情</p>
-            </div>
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-5"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[620px] max-h-[90vh] overflow-y-auto rounded-[14px] modal-animate"
+        style={{ background: '#1a1d27', border: '1px solid #2e3350', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: '#2e3350' }}>
+          <div className="text-[17px] font-bold" style={{ color: '#e8eaf0' }}>
+            🔴 买家详情 — {item.name}
           </div>
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-700 text-gray-400 hover:border-gray-600 hover:text-white transition">
+          <button
+            onClick={onClose}
+            className="w-[30px] h-[30px] rounded-md flex items-center justify-center text-lg cursor-pointer leading-none transition-all duration-200"
+            style={{ border: '1px solid #2e3350', background: 'transparent', color: '#8b90a7' }}
+          >
             ×
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="px-6 py-6">
           {/* 基本信息 */}
-          <section>
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">基本信息</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <InfoField label="风险等级" value={getRiskBadge(item.risk)} />
-              <InfoField label="平台" value={item.platform || '-'} />
-              <InfoField label="平台 ID" value={item.platform_id || '-'} />
-              <InfoField label="纠纷类型" value={item.dispute_type || '-'} />
-              <InfoField label="举报次数" value={`${item.report_count || 1} 次`} />
-              <InfoField label="最近举报" value={formatDate(item.created_at)} />
+          <div className="mb-5">
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: '#8b90a7', letterSpacing: 1 }}>基本信息</span>
+              <div className="flex-1 h-px" style={{ background: '#2e3350' }} />
             </div>
-          </section>
+            <div className="grid grid-cols-2 gap-2.5">
+              <DetailItem label="买家姓名" value={item.name} />
+              <DetailItem label="风险等级" value={getRiskBadge(item.risk)} />
+              <DetailItem label="平台" value={<>{getPlatformBadge(item.platform)}{item.platform_id ? <span className="ml-2">{item.platform_id}</span> : null}</>} />
+              <DetailItem label="纠纷类型" value={item.dispute_type || '—'} />
+              <DetailItem label="举报次数" value={`${item.report_count || 1} 次`} />
+              <DetailItem label="最近举报" value={formatDate(item.created_at)} />
+            </div>
+          </div>
 
-          {/* 联系信息 */}
-          <section>
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">联系与地址</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <InfoField label="邮箱地址" value={item.email} />
-              <InfoField label="电话号码" value={item.phone || '未提供'} />
-              <div className="col-span-2">
-                <InfoField label="收货地址" value={`${item.address || '未提供'}${item.zip_code ? ` (${item.zip_code})` : ''}`} />
+          {/* 联系与地址 */}
+          <div className="mb-5">
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: '#8b90a7', letterSpacing: 1 }}>联系与地址</span>
+              <div className="flex-1 h-px" style={{ background: '#2e3350' }} />
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              <DetailItem label="邮箱地址" value={item.email} />
+              <DetailItem label="电话号码" value={item.phone || '未提供'} />
+              <DetailItem label="收货地址" value={item.address || '未提供'} full />
+            </div>
+          </div>
+
+          {/* 关联账号 */}
+          {relatedEmails.length > 0 && (
+            <div className="mb-5">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: '#8b90a7', letterSpacing: 1 }}>关联账号</span>
+                <div className="flex-1 h-px" style={{ background: '#2e3350' }} />
               </div>
-            </div>
-          </section>
-
-          {/* 金额信息 */}
-          <section>
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">金额信息</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <InfoField label="总订单金额" value={formatCurrency(item.order_amount)} />
-              <InfoField label="退款/拒付金额" value={formatCurrency(item.refund_amount)} highlight />
-              <InfoField label="威胁拒付金额" value={formatCurrency(item.partial_refund_amount)} />
-              <InfoField label="是否有货物损失" value={item.has_cargo_loss ? '是' : '否'} />
-              {item.has_cargo_loss && (
-                <>
-                  <InfoField label="货物损失金额" value={formatCurrency(item.cargo_loss_amount)} />
-                  <InfoField label="损失承担方" value={item.loss_bearer || '未填写'} />
-                </>
-              )}
-            </div>
-          </section>
-
-          {/* 证据图片 */}
-          {item.evidence_images && item.evidence_images.length > 0 && (
-            <section>
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">证据截图</h3>
-              <div className="flex gap-3 flex-wrap">
-                {item.evidence_images.map((url, i) => (
-                  <img
+              <div className="flex gap-1.5 flex-wrap mt-2">
+                {relatedEmails.map((e, i) => (
+                  <span
                     key={i}
-                    src={url}
-                    className="w-24 h-24 object-cover rounded-lg border border-gray-700 cursor-pointer hover:border-red-500/50 transition"
-                    onClick={() => window.open(url)}
-                  />
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs"
+                    style={{ background: 'rgba(232,64,64,0.08)', border: '1px solid rgba(232,64,64,0.2)', color: '#ff6b6b' }}
+                  >
+                    🔗 {e}
+                  </span>
                 ))}
               </div>
-            </section>
-          )}
-
-          {/* 关联信息 */}
-          {relatedCount > 1 && (
-            <section>
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">关联信息（共 {relatedCount} 条记录）</h3>
-              <div className="space-y-2">
-                {item.related_emails && item.related_emails.length > 0 && (
-                  <div className="p-3 bg-[#1a1d27] rounded-lg border border-gray-800">
-                    <div className="text-xs text-gray-500 mb-1">关联邮箱</div>
-                    <div className="text-sm text-gray-300">{item.related_emails.join(', ')}</div>
-                  </div>
-                )}
-                {item.related_phones && item.related_phones.length > 0 && (
-                  <div className="p-3 bg-[#1a1d27] rounded-lg border border-gray-800">
-                    <div className="text-xs text-gray-500 mb-1">关联手机</div>
-                    <div className="text-sm text-gray-300">{item.related_phones.join(', ')}</div>
-                  </div>
-                )}
-              </div>
-            </section>
+            </div>
           )}
 
           {/* 举报内容 */}
-          <section>
-            <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">举报内容</h3>
-            <div className="p-4 bg-[#1a1d27] rounded-lg border border-gray-800">
-              <div className="flex justify-between text-xs text-gray-500 mb-2">
-                <span>举报说明</span>
-                <span>{formatDate(item.created_at)}</span>
-              </div>
-              <p className="text-gray-300 leading-relaxed">{item.description || '-'}</p>
+          <div>
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: '#8b90a7', letterSpacing: 1 }}>举报内容</span>
+              <div className="flex-1 h-px" style={{ background: '#2e3350' }} />
             </div>
-          </section>
+            <div style={{ background: '#22263a', border: '1px solid #2e3350', borderRadius: 7, padding: '12px 14px' }}>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs font-semibold" style={{ color: '#e8eaf0' }}>举报说明</span>
+                <span className="text-[11px]" style={{ color: '#8b90a7' }}>{formatDate(item.created_at)}</span>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: '#e8eaf0' }}>
+                {item.description || '—'}
+              </p>
+            </div>
+          </div>
+
+          {/* 证据截图 */}
+          {item.evidence_images && item.evidence_images.length > 0 && (
+            <div className="mt-5">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: '#8b90a7', letterSpacing: 1 }}>证据截图</span>
+                <div className="flex-1 h-px" style={{ background: '#2e3350' }} />
+              </div>
+              <div className="flex gap-2.5 flex-wrap">
+                {item.evidence_images.map((url, i) => (
+                  <div
+                    key={i}
+                    className="w-20 h-20 rounded-lg overflow-hidden cursor-pointer border hover:opacity-80 transition"
+                    style={{ borderColor: '#2e3350' }}
+                    onClick={() => setLightboxImage(url)}
+                  >
+                    <img src={url} alt={`证据 ${i + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t flex gap-2.5 justify-end" style={{ borderColor: '#2e3350' }}>
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-[7px] text-sm cursor-pointer transition-all duration-200"
+            style={{ background: 'transparent', border: '1px solid #2e3350', color: '#8b90a7' }}
+          >
+            关闭
+          </button>
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 rounded-[7px] text-sm font-semibold text-white cursor-pointer transition-all duration-200"
+            style={{ background: '#e84040', border: 'none' }}
+          >
+            补充举报
+          </button>
         </div>
       </div>
+
+      {/* 灯箱 */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[300] flex items-center justify-center p-5"
+          style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)' }}
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            className="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center text-white text-2xl hover:bg-white/10 transition"
+            onClick={() => setLightboxImage(null)}
+          >
+            ×
+          </button>
+          <img
+            src={lightboxImage}
+            alt="预览"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }
 
-function InfoField({ label, value, highlight }: { label: string; value: React.ReactNode; highlight?: boolean }) {
+function DetailItem({ label, value, full }: { label: string; value: React.ReactNode; full?: boolean }) {
   return (
-    <div className="p-3 bg-[#1a1d27] rounded-lg border border-gray-800/50">
-      <div className="text-xs text-gray-500 mb-1">{label}</div>
-      <div className={`text-sm ${highlight ? 'text-red-400' : 'text-gray-200'}`}>
-        {value}
+    <div className={full ? 'col-span-2' : ''}>
+      <div className="flex flex-col gap-[3px]">
+        <div className="text-[11px]" style={{ color: '#8b90a7' }}>{label}</div>
+        <div
+          className="text-sm px-2.5 py-1.5 rounded-[5px] break-all"
+          style={{ color: '#e8eaf0', background: '#22263a', border: '1px solid #2e3350' }}
+        >
+          {value}
+        </div>
       </div>
     </div>
   )
