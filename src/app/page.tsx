@@ -10,12 +10,56 @@ import { ReportFormDialog } from '@/components/report-form'
 import { DetailModal } from '@/components/detail-modal'
 
 function mergeByBuyerGroup(items: BlacklistItem[]): MergedBlacklistItem[] {
-  const groups: Record<string, BlacklistItem[]> = {}
-  for (const item of items) {
-    const key = item.buyer_group_id || `solo_${item.id}`
-    if (!groups[key]) groups[key] = []
-    groups[key].push(item)
+  // Union-Find: 邮箱或电话任一匹配就合并，支持传递
+  const parent = new Map<number, number>()
+  const find = (i: number): number => {
+    if (parent.get(i) !== i) parent.set(i, find(parent.get(i)!))
+    return parent.get(i)!
   }
+  const union = (a: number, b: number) => {
+    const ra = find(a), rb = find(b)
+    if (ra !== rb) parent.set(ra, rb)
+  }
+
+  // 初始化每个 item 的 parent 为自身索引
+  items.forEach((_, i) => parent.set(i, i))
+
+  // 地址标准化：转小写、去标点符号、压缩空格
+  const normalizeAddr = (addr: string) =>
+    addr.toLowerCase().replace(/[.,#\-'/]/g, ' ').replace(/\s+/g, ' ').trim()
+
+  // 按邮箱、电话、收货地址建立索引，匹配到同一个值的记录合并
+  const emailMap = new Map<string, number>()
+  const phoneMap = new Map<string, number>()
+  const addrMap = new Map<string, number>()
+  items.forEach((item, i) => {
+    const email = item.email?.trim().toLowerCase()
+    if (email) {
+      if (emailMap.has(email)) union(i, emailMap.get(email)!)
+      else emailMap.set(email, i)
+    }
+    const phone = item.phone?.trim()
+    if (phone) {
+      if (phoneMap.has(phone)) union(i, phoneMap.get(phone)!)
+      else phoneMap.set(phone, i)
+    }
+    const addr = item.address?.trim()
+    if (addr) {
+      const norm = normalizeAddr(addr)
+      if (norm.length > 5) { // 太短的地址不作为匹配依据，避免误合并
+        if (addrMap.has(norm)) union(i, addrMap.get(norm)!)
+        else addrMap.set(norm, i)
+      }
+    }
+  })
+
+  // 按根节点分组
+  const groups: Record<number, BlacklistItem[]> = {}
+  items.forEach((item, i) => {
+    const root = find(i)
+    if (!groups[root]) groups[root] = []
+    groups[root].push(item)
+  })
 
   return Object.entries(groups).map(([gid, records]) => {
     records.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
