@@ -4,75 +4,33 @@
 
 @layer base {
   * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+    @apply border-gray-800;
   }
 
   body {
-    font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
-    background: #0f1117;
-    color: #e8eaf0;
-    min-height: 100vh;
+    @apply bg-[#0f1117] text-gray-100;
   }
 
+  /* 滚动条样式 */
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #0f1117;
+    @apply bg-[#161822];
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #2e3350;
-    border-radius: 3px;
+    @apply bg-gray-700 rounded-full;
   }
 
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
+  }
+
+  /* 选择文本 */
   ::selection {
-    background: rgba(232, 64, 64, 0.3);
-    color: #fff;
+    @apply bg-red-500/30 text-white;
   }
-}
-
-.masked {
-  filter: blur(4px);
-  user-select: none;
-  cursor: pointer;
-  transition: filter 0.2s;
-}
-
-.masked:hover {
-  filter: blur(2px);
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.skeleton-bar {
-  background: linear-gradient(90deg, #22263a 25%, #2e3350 50%, #22263a 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-  border-radius: 4px;
-  height: 14px;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.modal-animate {
-  animation: slideUp 0.25s ease;
-}
-
-@keyframes toastIn {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.toast-animate-in {
-  animation: toastIn 0.3s ease forwards;
 }
