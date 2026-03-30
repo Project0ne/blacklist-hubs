@@ -22,12 +22,17 @@ export default function HomePage() {
   const [sortBy, setSortBy] = useState('created_at')
   const [selectedItem, setSelectedItem] = useState<BlacklistItem | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
 
   const PAGE_SIZE = 10
 
   const handleViewDetail = (item: BlacklistItem) => {
     setSelectedItem(item)
     setShowDetailModal(true)
+  }
+
+  const handleSupplementReport = () => {
+    setShowReportModal(true)
   }
 
   const loadData = async () => {
@@ -120,7 +125,11 @@ export default function HomePage() {
             <a href="/admin" className="px-4 py-2 text-sm text-gray-400 bg-gray-800/50 border border-gray-700 rounded-lg hover:text-white hover:border-gray-600 transition">
               管理后台
             </a>
-            <ReportFormDialog onSuccess={() => { loadData(); loadStats(); }} />
+            <ReportFormDialog
+              externalOpen={showReportModal}
+              onOpenChange={setShowReportModal}
+              onSuccess={() => { loadData(); loadStats(); }}
+            />
           </div>
         </div>
       </header>
@@ -166,6 +175,7 @@ export default function HomePage() {
           item={selectedItem}
           open={showDetailModal}
           onClose={() => setShowDetailModal(false)}
+          onReport={handleSupplementReport}
         />
       )}
     </div>

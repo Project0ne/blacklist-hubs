@@ -5,10 +5,17 @@ import { supabase } from '@/lib/supabase'
 
 interface ReportFormDialogProps {
   onSuccess?: () => void
+  externalOpen?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
-  const [open, setOpen] = useState(false)
+export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: ReportFormDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = externalOpen ?? internalOpen
+  const setOpen = (value: boolean) => {
+    setInternalOpen(value)
+    onOpenChange?.(value)
+  }
   const [loading, setLoading] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const [hasCargoLoss, setHasCargoLoss] = useState(true)

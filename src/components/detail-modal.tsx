@@ -8,9 +8,10 @@ interface DetailModalProps {
   item: BlacklistItem
   open: boolean
   onClose: () => void
+  onReport?: () => void
 }
 
-export function DetailModal({ item, open, onClose }: DetailModalProps) {
+export function DetailModal({ item, open, onClose, onReport }: DetailModalProps) {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   if (!open) return null
 
@@ -177,7 +178,7 @@ export function DetailModal({ item, open, onClose }: DetailModalProps) {
             关闭
           </button>
           <button
-            onClick={onClose}
+            onClick={() => { onClose(); onReport?.(); }}
             className="px-6 py-2.5 rounded-[7px] text-sm font-semibold text-white cursor-pointer transition-all duration-200"
             style={{ background: '#e84040', border: 'none' }}
           >
