@@ -219,7 +219,21 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1117]">
+    <div className="min-h-screen bg-[#0f1117] relative overflow-hidden">
+      {/* 顶部红色渐变光晕 */}
+      <div
+        className="pointer-events-none absolute top-0 left-0 w-full h-[600px] z-0"
+        style={{
+          background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(220,38,38,0.15) 0%, rgba(220,38,38,0.06) 40%, transparent 70%)',
+        }}
+      />
+      <div
+        className="pointer-events-none absolute top-0 left-[-10%] w-[60%] h-[500px] z-0"
+        style={{
+          background: 'radial-gradient(ellipse 70% 60% at 30% 0%, rgba(255,80,40,0.1) 0%, transparent 70%)',
+        }}
+      />
+
       {/* Header */}
       <header className="border-b border-gray-800/50 bg-[#0f1117]/95 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -267,7 +281,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-16 text-center">
+      <section className="py-16 text-center relative z-10">
         <h2 className="text-4xl md:text-5xl font-bold mb-4">
           <span className="text-white">外贸买家</span>
           <span className="text-red-500 mx-2">风险预警</span>
@@ -279,7 +293,7 @@ export default function HomePage() {
       </section>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 pb-16">
+      <main className="max-w-7xl mx-auto px-6 pb-16 relative z-10">
         <StatsCards stats={stats} />
         <SearchForm onSearch={handleSearch} />
         <BlacklistTable
