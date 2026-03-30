@@ -25,94 +25,86 @@ export function SearchForm({ onSearch }: SearchFormProps) {
   return (
     <div className="mb-8">
       {/* 搜索栏 */}
-      <div className="industrial-panel p-4 mb-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* 主搜索框 */}
-          <div className="flex-1 relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              placeholder="SEARCH BY NAME, EMAIL, PHONE OR ADDRESS..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full pl-12 pr-4 py-3 bg-surface-900 border-2 border-surface-700 rounded-lg text-surface-100 placeholder:text-surface-600 font-mono text-sm uppercase tracking-wider focus:outline-none focus:border-hazard-500/50 transition-all"
-            />
-          </div>
-          
-          {/* 搜索按钮 */}
+      <div className="flex flex-col md:flex-row gap-3 mb-4">
+        <div className="flex-1 flex gap-2">
+          <select className="px-4 py-3 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-300 text-sm">
+            <option>全部字段</option>
+          </select>
+          <input
+            placeholder="输入买家姓名、邮箱、电话或地址进行查询..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="flex-1 px-4 py-3 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-100 placeholder:text-gray-500 focus:outline-none focus:border-red-500/50 transition"
+          />
           <button 
             onClick={handleSearch}
-            className="btn-industrial btn-industrial-primary flex items-center gap-2 px-8"
+            className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium flex items-center gap-2 transition"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            SEARCH
+            查询
           </button>
         </div>
       </div>
 
-      {/* 筛选器 */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* 风险等级 */}
-        <select
-          value={risk}
-          onChange={(e) => { setRisk(e.target.value); onSearch(query, e.target.value, platform, sort); }}
-          className="px-4 py-2 bg-surface-900 border border-surface-700 rounded-lg text-sm text-surface-300 focus:outline-none focus:border-surface-600 transition-all appearance-none cursor-pointer"
-        >
-          <option value="">ALL RISK LEVELS</option>
-          <option value="高">🔴 HIGH RISK</option>
-          <option value="中">🟡 MEDIUM RISK</option>
-          <option value="低">🟢 LOW RISK</option>
-        </select>
-
-        {/* 排序 */}
-        <select
-          value={sort}
-          onChange={(e) => { setSort(e.target.value); onSearch(query, risk, platform, e.target.value); }}
-          className="px-4 py-2 bg-surface-900 border border-surface-700 rounded-lg text-sm text-surface-300 focus:outline-none focus:border-surface-600 transition-all appearance-none cursor-pointer"
-        >
-          <option value="created_at">NEWEST FIRST</option>
-          <option value="report_count">MOST REPORTED</option>
-        </select>
-
-        <div className="flex-1" />
-
-        {/* 平台标签 */}
-        <div className="flex flex-wrap gap-2">
-          {platforms.map((p) => (
-            <button
-              key={p}
-              onClick={() => { setPlatform(p); onSearch(query, risk, p, sort); }}
-              className={`
-                px-4 py-1.5 rounded-lg text-xs font-mono font-medium uppercase tracking-wider
-                transition-all duration-200
-                ${platform === p
-                  ? 'bg-hazard-500 text-surface-950 shadow-lg shadow-hazard-500/20'
-                  : 'bg-surface-800 text-surface-400 border border-surface-700 hover:border-surface-600 hover:text-surface-300'
-                }
-              `}
-            >
-              {p}
-            </button>
-          ))}
+      {/* 平台标签 */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {platforms.map((p) => (
           <button
-            onClick={() => { setPlatform(''); onSearch(query, risk, '', sort); }}
+            key={p}
+            onClick={() => { setPlatform(p); onSearch(query, risk, p, sort); }}
             className={`
-              px-4 py-1.5 rounded-lg text-xs font-mono font-medium uppercase tracking-wider
-              transition-all duration-200
-              ${platform === ''
-                ? 'bg-surface-600 text-surface-100'
-                : 'bg-surface-800 text-surface-400 border border-surface-700 hover:border-surface-600 hover:text-surface-300'
+              px-4 py-2 rounded-lg text-sm font-medium transition
+              ${platform === p
+                ? 'bg-red-500 text-white'
+                : 'bg-[#1a1d27] border border-gray-700 text-gray-300 hover:border-gray-600'
               }
             `}
           >
-            ALL
+            {p}
           </button>
+        ))}
+        <button
+          onClick={() => { setPlatform(''); onSearch(query, risk, '', sort); }}
+          className={`
+            px-4 py-2 rounded-lg text-sm font-medium transition
+            ${platform === ''
+              ? 'bg-red-500 text-white'
+              : 'bg-[#1a1d27] border border-gray-700 text-gray-300 hover:border-gray-600'
+            }
+          `}
+        >
+          全部平台
+        </button>
+      </div>
+
+      {/* 筛选器 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-5 bg-red-500 rounded-full" />
+          <span className="text-white font-medium">黑名单记录</span>
+        </div>
+        <div className="flex gap-2">
+          <select
+            value={risk}
+            onChange={(e) => { setRisk(e.target.value); onSearch(query, e.target.value, platform, sort); }}
+            className="px-4 py-2 bg-[#1a1d27] border border-gray-700 rounded-lg text-sm text-gray-300 focus:outline-none"
+          >
+            <option value="">全部风险</option>
+            <option value="高">高风险</option>
+            <option value="中">中风险</option>
+            <option value="低">低风险</option>
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => { setSort(e.target.value); onSearch(query, risk, platform, e.target.value); }}
+            className="px-4 py-2 bg-[#1a1d27] border border-gray-700 rounded-lg text-sm text-gray-300 focus:outline-none"
+          >
+            <option value="created_at">最新优先</option>
+            <option value="report_count">举报最多</option>
+          </select>
         </div>
       </div>
     </div>

@@ -1,21 +1,16 @@
 import type { Metadata } from 'next'
-import { Space_Grotesk } from 'next/font/google'
-import { JetBrains_Mono } from 'next/font/google'
+import { Noto_Sans_SC } from 'next/font/google'
 import './globals.css'
 
-const spaceGrotesk = Space_Grotesk({ 
+const notoSansSC = Noto_Sans_SC({ 
   subsets: ['latin'],
-  variable: '--font-display',
-})
-
-const jetbrainsMono = JetBrains_Mono({ 
-  subsets: ['latin'],
-  variable: '--font-mono',
+  variable: '--font-sans',
+  weight: ['400', '500', '600', '700'],
 })
 
 export const metadata: Metadata = {
-  title: 'BlackList Hub · 外贸风险预警系统',
-  description: '恶意买家黑名单数据库 - 保护跨境电商卖家权益',
+  title: '外贸黑名单预警平台 - BlackList Hub',
+  description: '收录恶意仅退款、虚假纠纷、空包诈骗等高风险买家信息，保护外贸卖家合法权益',
 }
 
 export default function RootLayout({
@@ -25,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" className="dark">
-      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className={`${notoSansSC.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>
