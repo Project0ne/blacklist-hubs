@@ -9,6 +9,8 @@
 
 ---
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=blacklist-hubs&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_ADMIN_ACCOUNT,NEXT_PUBLIC_ADMIN_PASSWORD)
+
 ## ✨ 功能特性
 
 - 🔍 **多字段搜索** — 支持按买家姓名、邮箱、电话、收货地址、平台 ID 联合查询
@@ -23,48 +25,28 @@
 
 ---
 
-## 🚀 快速部署
+## 🚀 一键部署
 
-### 第一步：创建 Supabase 数据库
+点击上方按钮或直接访问：[**Deploy to Vercel**](https://vercel.com/new/clone?repository-name=blacklist-hubs)
 
-1. 前往 [supabase.com](https://supabase.com) 注册并创建项目
-2. 进入项目 → **SQL Editor** → 执行 `schema.sql` 中的SQL
-3. 在 **Storage** 中创建存储桶：`evidence-images`（私有）
-4. 记录 **Project URL** 和 **Anon Key**
+### 部署后配置
 
-### 第二步：安装依赖
+1. **部署完成后**，进入 Vercel 项目设置 → **Environment Variables**
+2. 添加以下环境变量：
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://你的项目ID.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=你的Supabase Anon Key
+   NEXT_PUBLIC_ADMIN_ACCOUNT=admin
+   NEXT_PUBLIC_ADMIN_PASSWORD=你的管理员密码
+   ```
+3. 重新部署项目（Vercel 会自动重新部署）
 
-```bash
-npm install
-```
+### 配置 Supabase（第一次使用）
 
-### 第三步：配置环境变量
-
-复制 `.env.local.example` 为 `.env.local`，填写：
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://你的项目ID.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=你的Supabase Anon Key
-NEXT_PUBLIC_ADMIN_ACCOUNT=admin
-NEXT_PUBLIC_ADMIN_PASSWORD=你的管理员密码
-```
-
-### 第四步：运行开发服务器
-
-```bash
-npm run dev
-```
-
-访问 http://localhost:3000
-
-### 第五步：部署到 Vercel
-
-```bash
-npm run build
-vercel
-```
-
-或连接 GitHub 仓库自动部署。
+1. 前往 [supabase.com](https://supabase.com) 创建项目
+2. 在 **SQL Editor** 执行 `schema.sql`
+3. 在 **Storage** 创建桶 `evidence-images`（私有）
+4. 将 Supabase 的 URL 和 Anon Key 填入 Vercel 环境变量
 
 ---
 
