@@ -110,7 +110,7 @@ export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-      <div className="bg-[#161822] border border-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="mt-20 bg-[#161822] border border-gray-800 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
         <div className="sticky top-0 bg-[#161822]/95 backdrop-blur-sm border-b border-gray-800 p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
