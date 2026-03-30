@@ -11,7 +11,6 @@ export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
-  const [hasCargoLoss, setHasCargoLoss] = useState(true)
   const [risk, setRisk] = useState<'高' | '中' | '低'>('高')
   const [platform, setPlatform] = useState('')
   const [customPlatform, setCustomPlatform] = useState('')
@@ -72,9 +71,7 @@ export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
       order_amount: parseFloat(formData.get('order_amount') as string) || null,
       refund_amount: parseFloat(formData.get('refund_amount') as string) || null,
       partial_refund_amount: parseFloat(formData.get('partial_refund_amount') as string) || null,
-      has_cargo_loss: hasCargoLoss,
-      cargo_loss_amount: hasCargoLoss ? (parseFloat(formData.get('cargo_loss_amount') as string) || null) : null,
-      loss_bearer: hasCargoLoss ? (formData.get('loss_bearer') as string || null) : null,
+      cargo_loss_amount: parseFloat(formData.get('cargo_loss_amount') as string) || null,
       evidence_images: uploadedImages.length > 0 ? uploadedImages : null,
       status: 'pending',
       report_count: 1,
@@ -241,58 +238,12 @@ export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
           {/* 货物损失 */}
           <section>
             <h3 className="text-sm font-medium text-gray-300 mb-4">📦 货物损失信息</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">是否有货物损失？ *</label>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setHasCargoLoss(false)}
-                    className={`
-                      flex-1 py-3 rounded-lg font-medium transition
-                      ${!hasCargoLoss 
-                        ? 'bg-green-500 text-white' 
-                        : 'bg-[#1a1d27] border border-gray-700 text-gray-300'
-                      }
-                    `}
-                  >
-                    否
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setHasCargoLoss(true)}
-                    className={`
-                      flex-1 py-3 rounded-lg font-medium transition
-                      ${hasCargoLoss 
-                        ? 'bg-red-500 text-white' 
-                        : 'bg-[#1a1d27] border border-gray-700 text-gray-300'
-                      }
-                    `}
-                  >
-                    是
-                  </button>
-                </div>
-              </div>
-
-              {hasCargoLoss && (
-                <div className="grid grid-cols-2 gap-4">
-                  <FormInput label="货物损失金额" name="cargo_loss_amount" type="number" step="0.01" placeholder="$ 0.00" />
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">损失承担方</label>
-                    <select name="loss_bearer" className="w-full px-4 py-3 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:border-red-500/50">
-                      <option value="">请选择</option>
-                      <option value="自己承担">自己承担</option>
-                      <option value="平台承担">平台承担</option>
-                      <option value="部分承担">部分承担</option>
-                    </select>
-                  </div>
-                </div>
-              )}
+            <div>
+              <FormInput label="货物损失金额" name="cargo_loss_amount" type="number" step="0.01" placeholder="$ 0.00" />
             </div>
           </section>
 
           {/* 证据图片 */}
-          {hasCargoLoss && (
             <section>
               <h3 className="text-sm font-medium text-gray-300 mb-4">📷 损失截图（选填，最多5张）</h3>
               <div
