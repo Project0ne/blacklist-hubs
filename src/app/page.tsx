@@ -23,8 +23,19 @@ export default function HomePage() {
   const [selectedItem, setSelectedItem] = useState<BlacklistItem | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const [dbStatus, setDbStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
 
   const PAGE_SIZE = 10
+
+  const checkConnection = async () => {
+    try {
+      const { error } = await supabase.from('blacklist').select('id', { count: 'exact', head: true })
+      if (error) throw error
+      setDbStatus('connected')
+    } catch {
+      setDbStatus('disconnected')
+    }
+  }
 
   const handleViewDetail = (item: BlacklistItem) => {
     setSelectedItem(item)
@@ -89,9 +100,17 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    loadData()
-    loadStats()
-  }, [currentPage, searchQuery, riskFilter, platformFilter, sortBy])
+    checkConnection()
+    const interval = setInterval(checkConnection, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    if (dbStatus === 'connected') {
+      loadData()
+      loadStats()
+    }
+  }, [dbStatus, currentPage, searchQuery, riskFilter, platformFilter, sortBy])
 
   const handleSearch = (query: string, risk: string, platform: string, sort: string) => {
     setSearchQuery(query)
@@ -119,9 +138,23 @@ export default function HomePage() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button className="px-4 py-2 text-sm text-yellow-500 bg-yellow-500/10 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/20 transition">
-              演示模式
-            </button>
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
+              dbStatus === 'connected' ? 'bg-green-500/10 border-green-500/30' :
+              dbStatus === 'disconnected' ? 'bg-red-500/10 border-red-500/30' :
+              'bg-yellow-500/10 border-yellow-500/30'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                dbStatus === 'connected' ? 'bg-green-400' :
+                dbStatus === 'disconnected' ? 'bg-red-400' : 'bg-yellow-400 animate-pulse'
+              }`} />
+              <span className={`text-xs ${
+                dbStatus === 'connected' ? 'text-green-400' :
+                dbStatus === 'disconnected' ? 'text-red-400' : 'text-yellow-400'
+              }`}>
+                {dbStatus === 'connected' ? '已连接' :
+                 dbStatus === 'disconnected' ? '已断开' : '连接中...'}
+              </span>
+            </div>
             <a href="/admin" className="px-4 py-2 text-sm text-gray-400 bg-gray-800/50 border border-gray-700 rounded-lg hover:text-white hover:border-gray-600 transition">
               管理后台
             </a>
