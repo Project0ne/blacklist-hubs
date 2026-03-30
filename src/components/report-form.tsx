@@ -20,13 +20,13 @@ export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (uploadedImages.length + files.length > 5) {
-      alert('最多只能上传5张图片')
+      alert('Maximum 5 images allowed')
       return
     }
 
     for (const file of files) {
       if (file.size > 5 * 1024 * 1024) {
-        alert(`图片 ${file.name} 超过5MB限制`)
+        alert(`Image ${file.name} exceeds 5MB limit`)
         continue
       }
 
@@ -38,7 +38,7 @@ export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
         const { data: urlData } = supabase.storage.from('evidence-images').getPublicUrl(fileName)
         setUploadedImages(prev => [...prev, urlData.publicUrl])
       } catch (err: any) {
-        alert('图片上传失败：' + err.message)
+        alert('Upload failed: ' + err.message)
       }
     }
   }
@@ -84,11 +84,11 @@ export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
       const { error } = await supabase.from('blacklist').insert(payload)
       if (error) throw error
 
-      alert('举报已提交，等待管理员审核！')
+      alert('Report submitted successfully! Pending review.')
       setOpen(false)
       onSuccess?.()
     } catch (err: any) {
-      alert('提交失败：' + err.message)
+      alert('Submission failed: ' + err.message)
     } finally {
       setLoading(false)
     }
@@ -98,215 +98,342 @@ export function ReportFormDialog({ onSuccess }: ReportFormDialogProps) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition"
+        className="btn-industrial btn-industrial-danger flex items-center gap-2"
       >
-        ＋ 提交举报
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+        REPORT
       </button>
     )
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-      <div className="bg-gray-900 border border-gray-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">📋 提交黑名单举报</h2>
-          <button onClick={() => setOpen(false)} className="w-8 h-8 flex items-center justify-center rounded border border-gray-700 hover:border-red-500 transition">
-            ×
+    <div className="modal-backdrop">
+      <div className="modal-content max-w-3xl animate-slide-up">
+        {/* 顶部警告条 */}
+        <div className="h-1.5 bg-gradient-to-r from-hazard-500 via-danger-500 to-hazard-500" />
+        
+        <div className="modal-header">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-hazard-500/20 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-hazard-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-surface-100">SUBMIT REPORT</h2>
+              <p className="text-xs font-mono text-surface-500">BLACKLIST ENTRY</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setOpen(false)} 
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-800 border border-surface-700 text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-all"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-sm text-yellow-400">
-            ⏳ 举报提交后将进入人工审核队列，审核通过后公开显示，通常在 24 小时内处理。
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">买家姓名 *</label>
-              <input name="name" required placeholder="买家真实姓名或常用名" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">平台（选填）</label>
-              <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none">
-                <option value="">选择平台</option>
-                <option value="Amazon">Amazon</option>
-                <option value="eBay">eBay</option>
-                <option value="Shopify">Shopify</option>
-                <option value="AliExpress">AliExpress</option>
-                <option value="Wish">Wish</option>
-                <option value="Etsy">Etsy</option>
-                <option value="Walmart">Walmart</option>
-                <option value="custom">自定义...</option>
-              </select>
-              {platform === 'custom' && (
-                <input placeholder="输入平台名称" value={customPlatform} onChange={(e) => setCustomPlatform(e.target.value)} className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500 mt-2" />
-              )}
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">平台 ID（选填）</label>
-              <input name="platform_id" placeholder="买家在平台上的账号 ID" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">邮箱地址 *</label>
-              <input name="email" type="email" required placeholder="buyer@example.com" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">电话号码 *</label>
-              <input name="phone" required placeholder="+1 555 000 0000" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">风险等级 *</label>
-              <div className="flex gap-2">
-                {(['低', '中', '高'] as const).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRisk(r)}
-                    className={`flex-1 py-2 rounded-md text-sm font-medium transition ${
-                      risk === r
-                        ? r === '高' ? 'bg-red-600' : r === '中' ? 'bg-yellow-600' : 'bg-green-600'
-                        : 'bg-gray-800 border border-gray-700'
-                    }`}
-                  >
-                    {r === '高' ? '🔴' : r === '中' ? '🔶' : '⚠️'} {r}
-                  </button>
-                ))}
+          {/* 警告提示 */}
+          <div className="p-4 bg-hazard-500/10 border border-hazard-500/30 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-hazard-500/20 rounded flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-hazard-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm text-hazard-400 font-medium">PENDING REVIEW QUEUE</p>
+                <p className="text-xs text-hazard-500/70 mt-1">Reports are reviewed within 24 hours before publication.</p>
               </div>
             </div>
-            <div className="col-span-2 space-y-2">
-              <label className="text-sm text-gray-400">收货地址 *</label>
-              <input name="address" required placeholder="街道, 城市, 州/省, 邮编, 国家" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">邮编（选填）</label>
-              <input name="zip_code" placeholder="邮政编码" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">纠纷类型 *</label>
-              <select value={disputeType} onChange={(e) => setDisputeType(e.target.value)} required className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none">
-                <option value="">请选择纠纷类型</option>
-                <option value="仅退款（不退货）">仅退款（不退货）</option>
-                <option value="虚假声称未收到">虚假声称未收到</option>
-                <option value="恶意差评勒索">恶意差评勒索</option>
-                <option value="虚假纠纷/争议">虚假纠纷/争议</option>
-                <option value="信用卡拒付欺诈">信用卡拒付欺诈</option>
-                <option value="空包/重量纠纷">空包/重量纠纷</option>
-                <option value="TRO律师事务所">TRO律师事务所</option>
-                <option value="品牌方钓鱼执法">品牌方钓鱼执法</option>
-                <option value="恶意投诉侵权">恶意投诉侵权</option>
-                <option value="虚假退货退款">虚假退货退款</option>
-                <option value="恶意索赔">恶意索赔</option>
-                <option value="其他">其他</option>
-              </select>
-            </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-4">
-            <h3 className="text-sm font-medium text-red-400 mb-4">💰 金额信息（选填）</h3>
+          {/* 基本信息 */}
+          <section>
+            <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-hazard-500 rounded-full" />
+              BUYER INFORMATION
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <FormInput label="Name *" name="name" placeholder="Buyer's real name" required />
+              <FormSelect
+                label="Platform"
+                value={platform}
+                onChange={(e) => setPlatform(e.target.value)}
+                options={[
+                  { value: '', label: 'Select Platform' },
+                  { value: 'Amazon', label: 'Amazon' },
+                  { value: 'eBay', label: 'eBay' },
+                  { value: 'Shopify', label: 'Shopify' },
+                  { value: 'AliExpress', label: 'AliExpress' },
+                  { value: 'Wish', label: 'Wish' },
+                  { value: 'Etsy', label: 'Etsy' },
+                  { value: 'Walmart', label: 'Walmart' },
+                  { value: 'custom', label: 'Custom...' },
+                ]}
+              />
+              <FormInput label="Platform ID" name="platform_id" placeholder="Buyer's platform account ID" />
+              <FormInput label="Email *" name="email" type="email" placeholder="buyer@example.com" required />
+              <FormInput label="Phone *" name="phone" placeholder="+1 555 000 0000" required />
+              <div className="col-span-2">
+                <label className="block text-xs font-mono text-surface-500 mb-2">RISK LEVEL *</label>
+                <div className="flex gap-3">
+                  {(['低', '中', '高'] as const).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRisk(r)}
+                      className={`
+                        flex-1 py-3 rounded-lg font-mono font-bold uppercase tracking-wider transition-all
+                        ${risk === r
+                          ? r === '高' 
+                            ? 'bg-danger-600 text-white shadow-lg shadow-danger-500/20' 
+                            : r === '中' 
+                              ? 'bg-hazard-500 text-surface-950 shadow-lg shadow-hazard-500/20'
+                              : 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                          : 'bg-surface-800 border border-surface-700 text-surface-400 hover:border-surface-600'
+                        }
+                      `}
+                    >
+                      {r === '高' ? 'CRITICAL' : r === '中' ? 'WARNING' : 'LOW'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="col-span-2">
+                <FormInput label="Address *" name="address" placeholder="Street, City, State, Zip, Country" required />
+              </div>
+            </div>
+          </section>
+
+          {/* 纠纷类型 */}
+          <section>
+            <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-danger-500 rounded-full" />
+              DISPUTE DETAILS
+            </h3>
+            <FormSelect
+              label="Dispute Type *"
+              value={disputeType}
+              onChange={(e) => setDisputeType(e.target.value)}
+              required
+              options={[
+                { value: '', label: 'Select Dispute Type' },
+                { value: '仅退款（不退货）', label: 'Refund Only (No Return)' },
+                { value: '虚假声称未收到', label: 'False "Not Received" Claim' },
+                { value: '恶意差评勒索', label: 'Blackmail via Negative Review' },
+                { value: '虚假纠纷/争议', label: 'False Dispute/Claim' },
+                { value: '信用卡拒付欺诈', label: 'Credit Card Chargeback Fraud' },
+                { value: '空包/重量纠纷', label: 'Empty Package/Weight Dispute' },
+                { value: 'TRO律师事务所', label: 'TRO Law Firm' },
+                { value: '品牌方钓鱼执法', label: 'Brand Entrapment' },
+                { value: '恶意投诉侵权', label: 'Malicious IP Complaint' },
+                { value: '虚假退货退款', label: 'False Return/Refund' },
+                { value: '恶意索赔', label: 'Malicious Claim' },
+                { value: '其他', label: 'Other' },
+              ]}
+            />
+          </section>
+
+          {/* 金额信息 */}
+          <section>
+            <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-hazard-500 rounded-full" />
+              FINANCIAL INFO (OPTIONAL)
+            </h3>
             <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm text-gray-400">总订单金额</label>
-                <input name="order_amount" type="number" step="0.01" placeholder="$ 0.00" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-gray-400">退款/拒付金额</label>
-                <input name="refund_amount" type="number" step="0.01" placeholder="$ 0.00" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-gray-400">威胁拒付金额</label>
-                <input name="partial_refund_amount" type="number" step="0.01" placeholder="$ 0.00" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-              </div>
+              <FormInput label="Order Amount" name="order_amount" type="number" step="0.01" placeholder="$ 0.00" />
+              <FormInput label="Refund Amount" name="refund_amount" type="number" step="0.01" placeholder="$ 0.00" />
+              <FormInput label="Partial Refund" name="partial_refund_amount" type="number" step="0.01" placeholder="$ 0.00" />
             </div>
-          </div>
+          </section>
 
-          <div className="border-t border-gray-800 pt-4">
-            <h3 className="text-sm font-medium text-red-400 mb-4">📦 货物损失信息</h3>
+          {/* 货物损失 */}
+          <section>
+            <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-danger-500 rounded-full" />
+              CARGO LOSS
+            </h3>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm text-gray-400">是否有货物损失？ *</label>
-                <div className="flex gap-2">
+              <div>
+                <label className="block text-xs font-mono text-surface-500 mb-2">HAS CARGO LOSS? *</label>
+                <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={() => setHasCargoLoss(false)}
-                    className={`flex-1 py-2 rounded-md text-sm font-medium transition ${!hasCargoLoss ? 'bg-green-600' : 'bg-gray-800 border border-gray-700'}`}
+                    className={`
+                      flex-1 py-3 rounded-lg font-mono font-bold uppercase transition-all
+                      ${!hasCargoLoss 
+                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' 
+                        : 'bg-surface-800 border border-surface-700 text-surface-400 hover:border-surface-600'
+                      }
+                    `}
                   >
-                    ✅ 否
+                    NO
                   </button>
                   <button
                     type="button"
                     onClick={() => setHasCargoLoss(true)}
-                    className={`flex-1 py-2 rounded-md text-sm font-medium transition ${hasCargoLoss ? 'bg-red-600' : 'bg-gray-800 border border-gray-700'}`}
+                    className={`
+                      flex-1 py-3 rounded-lg font-mono font-bold uppercase transition-all
+                      ${hasCargoLoss 
+                        ? 'bg-danger-600 text-white shadow-lg shadow-danger-500/20' 
+                        : 'bg-surface-800 border border-surface-700 text-surface-400 hover:border-surface-600'
+                      }
+                    `}
                   >
-                    ❌ 是
+                    YES
                   </button>
                 </div>
               </div>
 
               {hasCargoLoss && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm text-gray-400">货物损失金额（选填）</label>
-                      <input name="cargo_loss_amount" type="number" step="0.01" placeholder="$ 0.00" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm text-gray-400">损失承担方（选填）</label>
-                      <select name="loss_bearer" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none">
-                        <option value="">请选择</option>
-                        <option value="自己承担">自己承担</option>
-                        <option value="平台承担">平台承担</option>
-                        <option value="部分承担">部分承担</option>
-                      </select>
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormInput label="Loss Amount" name="cargo_loss_amount" type="number" step="0.01" placeholder="$ 0.00" />
+                  <div>
+                    <label className="block text-xs font-mono text-surface-500 mb-2">LOSS BEARER</label>
+                    <select name="loss_bearer" className="input-industrial">
+                      <option value="">Select</option>
+                      <option value="自己承担">Self</option>
+                      <option value="平台承担">Platform</option>
+                      <option value="部分承担">Partial</option>
+                    </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm text-gray-400">损失截图（选填，最多5张）</label>
-                    <div
-                      className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:border-gray-600 transition"
-                      onClick={() => document.getElementById('image-upload')?.click()}
-                    >
-                      <div className="text-2xl mb-2">📷</div>
-                      <div className="text-sm text-gray-400">点击上传图片</div>
-                      <div className="text-xs text-gray-500 mt-1">支持 JPG、PNG 格式，单张最大 5MB</div>
-                    </div>
-                    <input id="image-upload" type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    {uploadedImages.length > 0 && (
-                      <div className="flex gap-2 flex-wrap mt-2">
-                        {uploadedImages.map((url, i) => (
-                          <div key={i} className="relative w-20 h-20 rounded overflow-hidden">
-                            <img src={url} className="w-full h-full object-cover" />
-                            <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center text-xs">×</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
+                </div>
               )}
             </div>
-          </div>
+          </section>
 
-          <div className="border-t border-gray-800 pt-4 space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">详细说明 *</label>
-              <textarea name="description" required placeholder="请描述具体情况：订单号、金额、发生时间、平台处理结果等..." className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500 min-h-[100px]" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">举报人联系方式（选填，不公开）</label>
-              <input name="reporter_email" placeholder="您的邮箱，审核结果将通知您" className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500" />
-            </div>
-          </div>
+          {/* 证据图片 */}
+          {hasCargoLoss && (
+            <section>
+              <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 bg-hazard-500 rounded-full" />
+                EVIDENCE (OPTIONAL, MAX 5)
+              </h3>
+              <div
+                className="border-2 border-dashed border-surface-700 rounded-lg p-8 text-center cursor-pointer hover:border-surface-600 transition-all"
+                onClick={() => document.getElementById('image-upload')?.click()}
+              >
+                <div className="w-12 h-12 mx-auto mb-3 bg-surface-800 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-sm text-surface-400 font-mono">CLICK TO UPLOAD</p>
+                <p className="text-xs text-surface-600 mt-1">JPG, PNG · MAX 5MB EACH</p>
+              </div>
+              <input id="image-upload" type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
+              {uploadedImages.length > 0 && (
+                <div className="flex gap-3 flex-wrap mt-4">
+                  {uploadedImages.map((url, i) => (
+                    <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-surface-700 group">
+                      <img src={url} className="w-full h-full object-cover" />
+                      <button 
+                        type="button" 
+                        onClick={() => removeImage(i)} 
+                        className="absolute top-1 right-1 w-5 h-5 bg-danger-600 rounded flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-gray-800">
-            <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 border border-gray-700 rounded-md text-sm hover:border-gray-500 transition">
-              取消
+          {/* 详细说明 */}
+          <section>
+            <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-hazard-500 rounded-full" />
+              DESCRIPTION
+            </h3>
+            <textarea 
+              name="description" 
+              required 
+              placeholder="Describe the situation: order number, amount, timeline, platform response..."
+              className="input-industrial min-h-[120px] resize-none"
+            />
+          </section>
+
+          {/* 举报人信息 */}
+          <section>
+            <FormInput label="Reporter Email (Optional, not public)" name="reporter_email" type="email" placeholder="Your email for review updates" />
+          </section>
+
+          {/* 提交按钮 */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-800">
+            <button 
+              type="button" 
+              onClick={() => setOpen(false)} 
+              className="btn-industrial"
+            >
+              CANCEL
             </button>
-            <button type="submit" disabled={loading} className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm font-medium transition disabled:opacity-50">
-              {loading ? '提交中...' : '提交举报'}
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="btn-industrial btn-industrial-primary flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  SUBMITTING...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  SUBMIT REPORT
+                </>
+              )}
             </button>
           </div>
         </form>
       </div>
+    </div>
+  )
+}
+
+function FormInput({ label, name, type = 'text', placeholder, required, step }: { 
+  label: string; name: string; type?: string; placeholder?: string; required?: boolean; step?: string 
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-mono text-surface-500 mb-2">{label}</label>
+      <input 
+        name={name} 
+        type={type} 
+        step={step}
+        placeholder={placeholder} 
+        required={required}
+        className="input-industrial"
+      />
+    </div>
+  )
+}
+
+function FormSelect({ label, value, onChange, options, required }: { 
+  label: string; value: string; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; 
+  options: { value: string; label: string }[]; required?: boolean 
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-mono text-surface-500 mb-2">{label}</label>
+      <select value={value} onChange={onChange} required={required} className="input-industrial">
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
     </div>
   )
 }

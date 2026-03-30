@@ -54,7 +54,7 @@ export function AdminPanel() {
       loadData()
       loadStats()
     } else {
-      setLoginError('账号或密码错误，请重试')
+      setLoginError('Invalid credentials')
     }
   }
 
@@ -83,7 +83,7 @@ export function AdminPanel() {
       setTotalItems(count || 0)
       setTotalPages(Math.ceil((count || 0) / PAGE_SIZE))
     } catch (error) {
-      console.error('加载数据失败:', error)
+      console.error('Load failed:', error)
     } finally {
       setLoading(false)
     }
@@ -105,7 +105,7 @@ export function AdminPanel() {
         total: total.count || 0,
       })
     } catch (error) {
-      console.error('加载统计失败:', error)
+      console.error('Stats failed:', error)
     }
   }
 
@@ -118,11 +118,11 @@ export function AdminPanel() {
 
       if (error) throw error
 
-      alert(status === 'approved' ? '✅ 已通过审核' : '❌ 已驳回')
+      alert(status === 'approved' ? 'APPROVED' : 'REJECTED')
       loadData()
       loadStats()
     } catch (error: any) {
-      alert('操作失败：' + error.message)
+      alert('Operation failed: ' + error.message)
     }
   }
 
@@ -146,29 +146,29 @@ export function AdminPanel() {
 
       if (error) throw error
 
-      alert('❌ 已驳回')
+      alert('REJECTED')
       setShowRejectDialog(false)
       setRejectReason('')
       setRejectingId(null)
       loadData()
       loadStats()
     } catch (error: any) {
-      alert('操作失败：' + error.message)
+      alert('Operation failed: ' + error.message)
     }
   }
 
   async function deleteRecord(id: number) {
-    if (!confirm('确认删除这条记录？此操作不可恢复。')) return
+    if (!confirm('Delete this record? This cannot be undone.')) return
 
     try {
       const { error } = await supabase.from('blacklist').delete().eq('id', id)
       if (error) throw error
 
-      alert('已删除')
+      alert('DELETED')
       loadData()
       loadStats()
     } catch (error: any) {
-      alert('删除失败：' + error.message)
+      alert('Delete failed: ' + error.message)
     }
   }
 
@@ -183,29 +183,29 @@ export function AdminPanel() {
 
       if (error) throw error
 
-      alert(`已批量${status === 'approved' ? '通过' : '驳回'} ${selectedIds.size} 条`)
+      alert(`${status === 'approved' ? 'APPROVED' : 'REJECTED'} ${selectedIds.size} items`)
       setSelectedIds(new Set())
       loadData()
       loadStats()
     } catch (error: any) {
-      alert('批量操作失败：' + error.message)
+      alert('Batch operation failed: ' + error.message)
     }
   }
 
   async function batchDelete() {
     if (selectedIds.size === 0) return
-    if (!confirm(`确认删除选中的 ${selectedIds.size} 条记录？此操作不可恢复。`)) return
+    if (!confirm(`Delete ${selectedIds.size} records? This cannot be undone.`)) return
 
     try {
       const { error } = await supabase.from('blacklist').delete().in('id', Array.from(selectedIds))
       if (error) throw error
 
-      alert(`已删除 ${selectedIds.size} 条`)
+      alert(`DELETED ${selectedIds.size} items`)
       setSelectedIds(new Set())
       loadData()
       loadStats()
     } catch (error: any) {
-      alert('批量删除失败：' + error.message)
+      alert('Batch delete failed: ' + error.message)
     }
   }
 
@@ -226,31 +226,59 @@ export function AdminPanel() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="w-[360px] bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-          <div className="text-5xl mb-4">🔐</div>
-          <h2 className="text-xl font-bold mb-2">管理员登录</h2>
-          <p className="text-sm text-gray-400 mb-6">请输入账号和密码以访问后台</p>
-          <div className="space-y-3">
-            <input
-              placeholder="管理员账号"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-              className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 outline-none focus:border-red-500"
-            />
-            <input
-              type="password"
-              placeholder="管理员密码"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-              className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 outline-none focus:border-red-500"
-            />
-            <button onClick={handleLogin} className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-md font-medium transition">
-              登 录
-            </button>
-            {loginError && <div className="text-sm text-red-400">{loginError}</div>}
+      <div className="min-h-screen flex items-center justify-center bg-surface-950">
+        {/* 背景装饰 */}
+        <div className="absolute inset-0 warning-stripes opacity-30" />
+        
+        <div className="relative w-[400px] animate-slide-up">
+          {/* 顶部警告条 */}
+          <div className="h-2 bg-gradient-to-r from-danger-600 via-hazard-500 to-danger-600 rounded-t-xl" />
+          
+          <div className="bg-surface-900 border border-surface-700 rounded-b-xl p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-danger-600/20 rounded-xl flex items-center justify-center">
+                <svg className="w-8 h-8 text-danger-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-surface-100 tracking-tight">ADMIN ACCESS</h2>
+              <p className="text-xs font-mono text-surface-500 mt-1">RESTRICTED AREA · AUTHORIZED PERSONNEL ONLY</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono text-surface-500 mb-2">USERNAME</label>
+                <input
+                  placeholder="Enter username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  className="input-industrial"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono text-surface-500 mb-2">PASSWORD</label>
+                <input
+                  type="password"
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  className="input-industrial"
+                />
+              </div>
+              <button 
+                onClick={handleLogin} 
+                className="w-full btn-industrial btn-industrial-danger py-4 font-bold tracking-wider"
+              >
+                AUTHENTICATE
+              </button>
+              {loginError && (
+                <div className="p-3 bg-danger-500/10 border border-danger-500/30 rounded-lg text-center">
+                  <p className="text-sm text-danger-400 font-mono">{loginError}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -258,161 +286,188 @@ export function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <header className="border-b border-gray-800 bg-gray-900">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-surface-950">
+      {/* 顶部警告条 */}
+      <div className="h-1.5 bg-gradient-to-r from-danger-600 via-hazard-500 to-danger-600" />
+      
+      {/* Header */}
+      <header className="border-b border-surface-800 bg-surface-900/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <a href="/" className="text-sm text-gray-400 hover:text-gray-200">← 返回前台</a>
-            <span className="font-bold">外贸黑名单 <span className="text-red-400">管理后台</span></span>
-            <span className="px-2 py-1 text-xs bg-red-500/20 text-red-400 border border-red-500/30 rounded">ADMIN</span>
+            <a href="/" className="flex items-center gap-2 text-surface-500 hover:text-surface-300 transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span className="text-sm font-mono">BACK</span>
+            </a>
+            <div className="h-6 w-px bg-surface-700" />
+            <span className="font-bold text-surface-200">ADMIN PANEL</span>
+            <span className="hazard-badge hazard-badge-critical">ADMIN</span>
           </div>
           <button
             onClick={() => { sessionStorage.removeItem('admin_auth'); location.reload(); }}
-            className="px-3 py-1 text-sm border border-gray-700 rounded text-gray-400 hover:border-red-500 hover:text-red-400 transition"
+            className="btn-industrial text-sm"
           >
-            退出登录
+            LOGOUT
           </button>
         </div>
       </header>
 
-      <div className="border-b border-gray-800 bg-gray-900/50">
-        <div className="container mx-auto px-4 py-4 flex gap-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center gap-3">
-            <div className="text-2xl font-bold text-yellow-400">{stats.pending}</div>
-            <div className="text-xs text-gray-400">待审核</div>
-          </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center gap-3">
-            <div className="text-2xl font-bold text-green-400">{stats.approved}</div>
-            <div className="text-xs text-gray-400">已通过</div>
-          </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center gap-3">
-            <div className="text-2xl font-bold text-red-400">{stats.rejected}</div>
-            <div className="text-xs text-gray-400">已驳回</div>
-          </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center gap-3">
-            <div className="text-2xl font-bold text-blue-400">{stats.total}</div>
-            <div className="text-xs text-gray-400">全部举报</div>
-          </div>
+      {/* Stats Bar */}
+      <div className="border-b border-surface-800 bg-surface-900/50">
+        <div className="container mx-auto px-6 py-4 flex gap-4">
+          <StatCard label="PENDING" value={stats.pending} color="text-hazard-400" bg="bg-hazard-500/10" border="border-hazard-500/20" pulse />
+          <StatCard label="APPROVED" value={stats.approved} color="text-emerald-400" bg="bg-emerald-500/10" border="border-emerald-500/20" />
+          <StatCard label="REJECTED" value={stats.rejected} color="text-danger-400" bg="bg-danger-500/10" border="border-danger-500/20" />
+          <StatCard label="TOTAL" value={stats.total} color="text-surface-200" bg="bg-surface-800" border="border-surface-700" />
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex gap-2 mb-4">
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-6">
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
           {[
-            { key: 'pending', label: '待审核', badge: stats.pending },
-            { key: 'approved', label: '已通过' },
-            { key: 'rejected', label: '已驳回' },
-            { key: 'all', label: '全部' },
+            { key: 'pending', label: 'PENDING', badge: stats.pending },
+            { key: 'approved', label: 'APPROVED' },
+            { key: 'rejected', label: 'REJECTED' },
+            { key: 'all', label: 'ALL' },
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => { setCurrentTab(tab.key); setCurrentPage(1); setSelectedIds(new Set()); }}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-                currentTab === tab.key ? 'bg-red-600' : 'bg-gray-800 border border-gray-700 hover:border-gray-500'
-              }`}
+              className={`
+                px-5 py-2.5 rounded-lg font-mono text-sm font-medium uppercase tracking-wider transition-all
+                ${currentTab === tab.key 
+                  ? 'bg-hazard-500 text-surface-950 shadow-lg shadow-hazard-500/20' 
+                  : 'bg-surface-800 text-surface-400 border border-surface-700 hover:border-surface-600'
+                }
+              `}
             >
               {tab.label}
-              {tab.badge ? <span className="ml-2 px-2 py-0.5 bg-yellow-500 text-black text-xs rounded-full">{tab.badge}</span> : null}
+              {tab.badge ? (
+                <span className="ml-2 px-2 py-0.5 bg-surface-950/20 text-xs rounded">{tab.badge}</span>
+              ) : null}
             </button>
           ))}
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-lg">
-          <div className="p-4 border-b border-gray-800 flex flex-wrap gap-3">
-            <input
-              placeholder="搜索买家姓名、邮箱、电话..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 min-w-[200px] bg-gray-800 border border-gray-700 rounded-md px-3 py-2 outline-none focus:border-red-500"
-            />
+        {/* Table Panel */}
+        <div className="industrial-panel overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-hazard-600 via-surface-700 to-hazard-600" />
+          
+          {/* Search & Filters */}
+          <div className="p-4 border-b border-surface-800 flex flex-wrap gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <input
+                placeholder="SEARCH BY NAME, EMAIL, PHONE..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-industrial"
+              />
+            </div>
             <select
               value={riskFilter}
               onChange={(e) => setRiskFilter(e.target.value)}
-              className="w-[120px] bg-gray-800 border border-gray-700 rounded-md px-3 py-2 outline-none"
+              className="input-industrial w-auto"
             >
-              <option value="">全部风险</option>
-              <option value="高">高风险</option>
-              <option value="中">中风险</option>
-              <option value="低">低风险</option>
+              <option value="">ALL RISKS</option>
+              <option value="高">HIGH RISK</option>
+              <option value="中">MEDIUM RISK</option>
+              <option value="低">LOW RISK</option>
             </select>
           </div>
 
+          {/* Batch Actions */}
           {selectedIds.size > 0 && (
-            <div className="p-3 bg-blue-500/10 border-b border-blue-500/20 flex items-center gap-3">
-              <span className="text-sm text-blue-400">已选 {selectedIds.size} 条</span>
-              <button onClick={() => batchAction('approved')} className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 rounded transition">
-                ✓ 批量通过
+            <div className="p-4 bg-hazard-500/10 border-b border-hazard-500/20 flex items-center gap-3">
+              <span className="text-sm font-mono text-hazard-400">{selectedIds.size} SELECTED</span>
+              <button onClick={() => batchAction('approved')} className="btn-industrial text-sm !bg-emerald-600 !border-emerald-700">
+                APPROVE
               </button>
-              <button onClick={() => batchAction('rejected')} className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 rounded transition">
-                ✗ 批量驳回
+              <button onClick={() => batchAction('rejected')} className="btn-industrial btn-industrial-danger text-sm">
+                REJECT
               </button>
-              <button onClick={batchDelete} className="px-3 py-1 text-sm border border-gray-700 rounded hover:border-red-500 transition">
-                🗑 批量删除
+              <button onClick={batchDelete} className="btn-industrial text-sm">
+                DELETE
               </button>
             </div>
           )}
 
+          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-800/50 text-left">
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium w-10">
+                <tr className="bg-surface-800/50 border-b border-surface-700">
+                  <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
                       checked={items.length > 0 && items.every(i => selectedIds.has(i.id))}
                       onChange={(e) => toggleSelectAll(e.target.checked)}
-                      className="w-4 h-4 accent-red-600"
+                      className="w-4 h-4 accent-hazard-500"
                     />
                   </th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">买家姓名</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">平台</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">邮箱</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">电话</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">风险</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">纠纷类型</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">订单金额</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">退款金额</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">状态</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">提交时间</th>
-                  <th className="px-4 py-3 text-xs text-gray-400 font-medium">操作</th>
+                  <th className="px-4 py-3 text-left text-xs font-mono font-medium text-surface-500 uppercase">BUYER</th>
+                  <th className="px-4 py-3 text-left text-xs font-mono font-medium text-surface-500 uppercase">PLATFORM</th>
+                  <th className="px-4 py-3 text-left text-xs font-mono font-medium text-surface-500 uppercase">RISK</th>
+                  <th className="px-4 py-3 text-left text-xs font-mono font-medium text-surface-500 uppercase">STATUS</th>
+                  <th className="px-4 py-3 text-left text-xs font-mono font-medium text-surface-500 uppercase">DATE</th>
+                  <th className="px-4 py-3 text-left text-xs font-mono font-medium text-surface-500 uppercase">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={12} className="text-center py-8"><div className="animate-spin w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full mx-auto"></div></td></tr>
+                  <tr><td colSpan={7} className="text-center py-12"><div className="animate-spin w-6 h-6 border-2 border-hazard-500 border-t-transparent rounded-full mx-auto" /></td></tr>
                 ) : items.length === 0 ? (
-                  <tr><td colSpan={12} className="text-center py-8 text-gray-500">📭 暂无记录</td></tr>
+                  <tr><td colSpan={7} className="text-center py-12 text-surface-500 font-mono">NO RECORDS</td></tr>
                 ) : items.map((item) => (
-                  <tr key={item.id} className={`border-t border-gray-800 hover:bg-gray-800/30 ${selectedIds.has(item.id) ? 'bg-blue-500/5' : ''}`}>
-                    <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.has(item.id)} onChange={(e) => toggleSelect(item.id, e.target.checked)} className="w-4 h-4 accent-red-600" /></td>
-                    <td className="px-4 py-3 font-medium">{item.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-400">{item.platform || '-'}</td>
-                    <td className="px-4 py-3 text-sm">{item.email}</td>
-                    <td className="px-4 py-3 text-sm text-gray-400">{item.phone || '-'}</td>
+                  <tr key={item.id} className={`border-t border-surface-800 hover:bg-surface-800/30 transition-colors ${selectedIds.has(item.id) ? 'bg-hazard-500/5' : ''}`}>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        item.risk === '高' ? 'bg-red-500/20 text-red-400' : item.risk === '中' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'
-                      }`}>
-                        {item.risk === '高' ? '🔴' : item.risk === '中' ? '🔶' : '⚠️'} {item.risk}
+                      <input type="checkbox" checked={selectedIds.has(item.id)} onChange={(e) => toggleSelect(item.id, e.target.checked)} className="w-4 h-4 accent-hazard-500" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-surface-200">{item.name}</div>
+                      <div className="text-xs font-mono text-surface-500">{item.email}</div>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-sm text-surface-400">{item.platform || '-'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`hazard-badge ${item.risk === '高' ? 'hazard-badge-critical' : item.risk === '中' ? 'hazard-badge-warning' : 'hazard-badge-safe'}`}>
+                        {item.risk === '高' ? 'HIGH' : item.risk === '中' ? 'MED' : 'LOW'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-400">{item.dispute_type || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-400">{item.order_amount ? `$${item.order_amount}` : '-'}</td>
-                    <td className="px-4 py-3 text-sm text-red-400">{item.refund_amount ? `$${item.refund_amount}` : '-'}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        item.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : item.status === 'approved' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                      }`}>
-                        {item.status === 'pending' ? '⏳ 待审核' : item.status === 'approved' ? '✅ 已通过' : '❌ 已驳回'}
+                      <span className={`hazard-badge ${item.status === 'pending' ? 'hazard-badge-warning' : item.status === 'approved' ? 'hazard-badge-safe' : 'hazard-badge-critical'}`}>
+                        {item.status.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-400">{formatDate(item.created_at)}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-surface-500">{formatDate(item.created_at)}</td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <button onClick={() => setSelectedItem(item)} className="w-7 h-7 flex items-center justify-center border border-gray-700 rounded text-xs hover:border-blue-500">👁</button>
-                        {item.status !== 'approved' && <button onClick={() => quickAction(item.id, 'approved')} className="w-7 h-7 flex items-center justify-center bg-green-600 rounded text-xs hover:bg-green-700">✓</button>}
-                        {item.status !== 'rejected' && <button onClick={() => handleReject(item.id)} className="w-7 h-7 flex items-center justify-center bg-red-600 rounded text-xs hover:bg-red-700">✗</button>}
-                        <button onClick={() => deleteRecord(item.id)} className="w-7 h-7 flex items-center justify-center border border-gray-700 rounded text-xs hover:border-red-500">🗑</button>
+                      <div className="flex gap-2">
+                        <button onClick={() => setSelectedItem(item)} className="w-8 h-8 flex items-center justify-center rounded bg-surface-800 border border-surface-700 text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-all" title="View">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        {item.status !== 'approved' && (
+                          <button onClick={() => quickAction(item.id, 'approved')} className="w-8 h-8 flex items-center justify-center rounded bg-emerald-600 text-white hover:bg-emerald-500 transition-all" title="Approve">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                        )}
+                        {item.status !== 'rejected' && (
+                          <button onClick={() => handleReject(item.id)} className="w-8 h-8 flex items-center justify-center rounded bg-danger-600 text-white hover:bg-danger-500 transition-all" title="Reject">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        <button onClick={() => deleteRecord(item.id)} className="w-8 h-8 flex items-center justify-center rounded bg-surface-800 border border-surface-700 text-surface-400 hover:bg-danger-600 hover:border-danger-700 hover:text-white transition-all" title="Delete">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -421,64 +476,107 @@ export function AdminPanel() {
             </table>
           </div>
 
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="p-4 border-t border-gray-800 flex items-center justify-center gap-2">
-              <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="w-8 h-8 flex items-center justify-center border border-gray-700 rounded disabled:opacity-30">‹</button>
+            <div className="p-4 border-t border-surface-800 flex items-center justify-center gap-2">
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-800 border border-surface-700 text-surface-400 hover:bg-surface-700 disabled:opacity-30 transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
               {[...Array(totalPages)].map((_, i) => (
-                <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 flex items-center justify-center rounded ${currentPage === i + 1 ? 'bg-red-600' : 'border border-gray-700'}`}>{i + 1}</button>
+                <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-10 h-10 flex items-center justify-center rounded-lg font-mono text-sm transition-all ${currentPage === i + 1 ? 'bg-hazard-500 text-surface-950' : 'bg-surface-800 border border-surface-700 text-surface-400 hover:bg-surface-700'}`}>
+                  {i + 1}
+                </button>
               ))}
-              <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="w-8 h-8 flex items-center justify-center border border-gray-700 rounded disabled:opacity-30">›</button>
-              <span className="text-sm text-gray-400 ml-2">共 {totalItems} 条</span>
+              <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-800 border border-surface-700 text-surface-400 hover:bg-surface-700 disabled:opacity-30 transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+              <span className="text-sm font-mono text-surface-500 ml-4">{totalItems} TOTAL</span>
             </div>
           )}
         </div>
       </main>
 
+      {/* Detail Modal */}
       {selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setSelectedItem(null)}>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold">📋 审核 — {selectedItem.name}</h2>
-              <button onClick={() => setSelectedItem(null)} className="w-8 h-8 flex items-center justify-center rounded border border-gray-700 hover:border-red-500">×</button>
+        <div className="modal-backdrop" onClick={() => setSelectedItem(null)}>
+          <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
+            <div className="h-1.5 bg-gradient-to-r from-hazard-500 via-danger-500 to-hazard-500" />
+            <div className="modal-header">
+              <h2 className="text-lg font-bold">REVIEW · {selectedItem.name}</h2>
+              <button onClick={() => setSelectedItem(null)} className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-all">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div><div className="text-xs text-gray-500 mb-1">买家姓名</div><div className="bg-gray-800 p-2 rounded text-sm">{selectedItem.name}</div></div>
-                <div><div className="text-xs text-gray-500 mb-1">风险等级</div><div className="bg-gray-800 p-2 rounded text-sm">{selectedItem.risk}</div></div>
-                <div><div className="text-xs text-gray-500 mb-1">邮箱</div><div className="bg-gray-800 p-2 rounded text-sm">{selectedItem.email}</div></div>
-                <div><div className="text-xs text-gray-500 mb-1">电话</div><div className="bg-gray-800 p-2 rounded text-sm">{selectedItem.phone || '未提供'}</div></div>
-                <div className="col-span-2"><div className="text-xs text-gray-500 mb-1">地址</div><div className="bg-gray-800 p-2 rounded text-sm">{selectedItem.address || '未提供'}</div></div>
-                <div><div className="text-xs text-gray-500 mb-1">总订单金额</div><div className="bg-gray-800 p-2 rounded text-sm">{formatCurrency(selectedItem.order_amount)}</div></div>
-                <div><div className="text-xs text-gray-500 mb-1">退款金额</div><div className="bg-gray-800 p-2 rounded text-sm">{formatCurrency(selectedItem.refund_amount)}</div></div>
-                <div><div className="text-xs text-gray-500 mb-1">货物损失</div><div className="bg-gray-800 p-2 rounded text-sm">{selectedItem.has_cargo_loss ? '❌ 是' : '✅ 否'}</div></div>
-                <div><div className="text-xs text-gray-500 mb-1">损失金额</div><div className="bg-gray-800 p-2 rounded text-sm">{formatCurrency(selectedItem.cargo_loss_amount)}</div></div>
+                <InfoField label="Name" value={selectedItem.name} />
+                <InfoField label="Risk" value={selectedItem.risk} />
+                <InfoField label="Email" value={selectedItem.email} mono />
+                <InfoField label="Phone" value={selectedItem.phone || 'N/A'} mono />
+                <div className="col-span-2"><InfoField label="Address" value={selectedItem.address || 'N/A'} /></div>
+                <InfoField label="Order Amount" value={formatCurrency(selectedItem.order_amount)} mono />
+                <InfoField label="Refund Amount" value={formatCurrency(selectedItem.refund_amount)} mono danger />
+                <InfoField label="Cargo Loss" value={selectedItem.has_cargo_loss ? 'YES' : 'NO'} />
+                <InfoField label="Loss Amount" value={formatCurrency(selectedItem.cargo_loss_amount)} mono />
               </div>
-              <div><div className="text-xs text-gray-500 mb-1">举报说明</div><div className="bg-gray-800 p-3 rounded text-sm">{selectedItem.description || '-'}</div></div>
+              <div>
+                <label className="text-xs font-mono text-surface-500 mb-1 block">DESCRIPTION</label>
+                <div className="p-3 bg-surface-800 rounded-lg text-sm">{selectedItem.description || '-'}</div>
+              </div>
               {selectedItem.evidence_images && selectedItem.evidence_images.length > 0 && (
-                <div><div className="text-xs text-gray-500 mb-2">损失截图</div><div className="flex gap-2 flex-wrap">{selectedItem.evidence_images.map((url, i) => <img key={i} src={url} className="w-20 h-20 object-cover rounded cursor-pointer" onClick={() => window.open(url)} />)}</div></div>
+                <div>
+                  <label className="text-xs font-mono text-surface-500 mb-2 block">EVIDENCE</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedItem.evidence_images.map((url, i) => (
+                      <img key={i} src={url} className="w-20 h-20 object-cover rounded-lg border border-surface-700 cursor-pointer hover:border-hazard-500/50" onClick={() => window.open(url)} />
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
         </div>
       )}
 
+      {/* Reject Dialog */}
       {showRejectDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-bold mb-4">驳回原因</h2>
+        <div className="modal-backdrop">
+          <div className="w-[400px] modal-content p-6 animate-slide-up">
+            <h2 className="text-lg font-bold mb-4">REASON FOR REJECTION</h2>
             <textarea
-              placeholder="请说明驳回原因，如：信息不完整、无法核实等..."
+              placeholder="Explain why this is being rejected..."
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 outline-none focus:border-red-500 min-h-[100px]"
+              className="input-industrial min-h-[100px] mb-4"
             />
-            <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setShowRejectDialog(false)} className="px-4 py-2 border border-gray-700 rounded-md text-sm">取消</button>
-              <button onClick={confirmReject} className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm">确认驳回</button>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowRejectDialog(false)} className="btn-industrial">CANCEL</button>
+              <button onClick={confirmReject} className="btn-industrial btn-industrial-danger">CONFIRM REJECTION</button>
             </div>
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function StatCard({ label, value, color, bg, border, pulse }: { 
+  label: string; value: number; color: string; bg: string; border: string; pulse?: boolean 
+}) {
+  return (
+    <div className={`flex items-center gap-3 px-4 py-3 rounded-lg ${bg} border ${border}`}>
+      {pulse && <span className="status-dot status-dot-warning" />}
+      <div className={`text-2xl font-bold font-mono ${color}`}>{value}</div>
+      <div className="text-xs font-mono text-surface-500">{label}</div>
+    </div>
+  )
+}
+
+function InfoField({ label, value, mono, danger }: { label: string; value: React.ReactNode; mono?: boolean; danger?: boolean }) {
+  return (
+    <div>
+      <label className="text-xs font-mono text-surface-500 mb-1 block">{label}</label>
+      <div className={`bg-surface-800 p-2 rounded text-sm ${mono ? 'font-mono' : ''} ${danger ? 'text-danger-400' : ''}`}>{value}</div>
     </div>
   )
 }

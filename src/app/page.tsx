@@ -87,28 +87,50 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <header className="border-b border-gray-800 sticky top-0 bg-gray-950/80 backdrop-blur-sm z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-xl">
-              🚫
+    <div className="min-h-screen">
+      {/* 顶部警告条 */}
+      <div className="h-1.5 bg-gradient-to-r from-hazard-500 via-danger-500 to-hazard-500" />
+      
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-surface-800 bg-surface-950/95 backdrop-blur-md">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-danger-600 to-danger-700 rounded-lg flex items-center justify-center shadow-lg shadow-danger-500/20">
+                  <span className="text-2xl">🚫</span>
+                </div>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-hazard-500 rounded-full animate-pulse border-2 border-surface-950" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  <span className="text-hazard-400">BLACK</span>
+                  <span className="text-surface-100">LIST</span>
+                  <span className="text-surface-500 font-normal ml-2 text-lg">HUB</span>
+                </h1>
+                <p className="text-xs font-mono text-surface-500 tracking-wider">CROSS-BORDER E-COMMERCE RISK DATABASE</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold">外贸<span className="text-red-400">黑名单</span>预警平台</h1>
-              <p className="text-xs text-gray-500">保护外贸卖家合法权益</p>
+
+            <div className="flex items-center gap-4">
+              <a 
+                href="/admin" 
+                className="group flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-900 border border-surface-700 text-surface-400 hover:text-surface-200 hover:border-surface-600 transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-sm font-medium">ADMIN</span>
+              </a>
+              <ReportFormDialog onSuccess={() => { loadData(); loadStats(); }} />
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <a href="/admin" className="text-sm text-gray-400 hover:text-gray-200 transition">
-              管理后台
-            </a>
-            <ReportFormDialog onSuccess={() => { loadData(); loadStats(); }} />
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-8">
         <StatsCards stats={stats} />
         <SearchForm onSearch={handleSearch} />
         <BlacklistTable
@@ -120,10 +142,24 @@ export default function HomePage() {
         />
       </main>
 
-      <footer className="border-t border-gray-800 py-6 mt-8">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-          <p>外贸黑名单预警平台 · 保护外贸卖家合法权益</p>
-          <p className="mt-1">数据由社区共同维护，仅供参考</p>
+      {/* Footer */}
+      <footer className="border-t border-surface-800 mt-12">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-surface-800 rounded flex items-center justify-center">
+                <span className="text-lg">🚫</span>
+              </div>
+              <span className="font-bold text-surface-300">BlackList Hub</span>
+            </div>
+            <p className="text-sm text-surface-500 font-mono">
+              DATA MAINTAINED BY COMMUNITY · FOR REFERENCE ONLY
+            </p>
+            <div className="flex items-center gap-2 text-xs text-surface-600">
+              <span className="status-dot status-dot-active" />
+              <span>SYSTEM ONLINE</span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

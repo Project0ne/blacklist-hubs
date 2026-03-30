@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { BlacklistItem } from '@/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
@@ -13,15 +14,17 @@ export function DetailModal({ item, open, onClose }: DetailModalProps) {
   if (!open) return null
 
   const getRiskBadge = (risk: string) => {
-    const styles: Record<string, string> = {
-      '高': 'bg-red-500/20 text-red-400 border-red-500/30',
-      '中': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      '低': 'bg-green-500/20 text-green-400 border-green-500/30',
+    const configs: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+      '高': { bg: 'bg-danger-500/10', text: 'text-danger-400', border: 'border-danger-500/30', dot: 'status-dot-danger' },
+      '中': { bg: 'bg-hazard-500/10', text: 'text-hazard-400', border: 'border-hazard-500/30', dot: 'status-dot-warning' },
+      '低': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30', dot: 'status-dot-active' },
     }
-    const icons: Record<string, string> = { '高': '🔴', '中': '🔶', '低': '⚠️' }
+    const config = configs[risk] || configs['低']
+    
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border ${styles[risk] || ''}`}>
-        {icons[risk]} {risk}风险
+      <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-mono font-bold uppercase ${config.bg} ${config.text} border ${config.border}`}>
+        <span className={`status-dot ${config.dot}`} />
+        {risk} RISK
       </span>
     )
   }
@@ -29,145 +32,176 @@ export function DetailModal({ item, open, onClose }: DetailModalProps) {
   const relatedCount = (item.related_emails?.length || 0) + (item.related_phones?.length || 0)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-gray-900 border border-gray-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">🔴 买家详情 — {item.name}</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded border border-gray-700 hover:border-red-500 transition">
-            ×
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-content animate-fade-in" onClick={e => e.stopPropagation()}>
+        {/* 顶部警告条 */}
+        <div className="h-1.5 bg-gradient-to-r from-danger-600 via-hazard-500 to-danger-600" />
+        
+        <div className="modal-header">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-danger-600/20 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-danger-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-surface-100">{item.name}</h2>
+              <p className="text-xs font-mono text-surface-500">BUYER PROFILE</p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-800 border border-surface-700 text-surface-400 hover:bg-surface-700 hover:text-surface-200 transition-all"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
         <div className="p-6 space-y-6">
-          <div>
-            <h3 className="text-xs uppercase tracking-wider text-gray-500 mb-3">基本信息</h3>
+          {/* 基本信息 */}
+          <section>
+            <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-hazard-500 rounded-full" />
+              BASIC INFORMATION
+            </h3>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">买家姓名</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{item.name}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">风险等级</div>
-                <div className="bg-gray-800 p-2 rounded">{getRiskBadge(item.risk)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">平台</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{item.platform || '-'} {item.platform_id ? `(${item.platform_id})` : ''}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">纠纷类型</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{item.dispute_type || '-'}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">举报次数</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{item.report_count || 1} 次</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">最近举报</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{formatDate(item.created_at)}</div>
-              </div>
+              <InfoField label="Risk Level" value={getRiskBadge(item.risk)} />
+              <InfoField label="Platform" value={item.platform ? `${item.platform}${item.platform_id ? ` (${item.platform_id})` : ''}` : '-'} />
+              <InfoField label="Dispute Type" value={item.dispute_type || '-'} />
+              <InfoField label="Report Count" value={`${item.report_count || 1} times`} />
             </div>
-          </div>
+          </section>
 
-          <div>
-            <h3 className="text-xs uppercase tracking-wider text-gray-500 mb-3">联系与地址</h3>
+          {/* 联系信息 */}
+          <section>
+            <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-danger-500 rounded-full" />
+              CONTACT INFORMATION
+            </h3>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">邮箱地址</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{item.email}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">电话号码</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{item.phone || '未提供'}</div>
-              </div>
+              <InfoField label="Email" value={item.email} mono />
+              <InfoField label="Phone" value={item.phone || 'Not provided'} mono />
               <div className="col-span-2">
-                <div className="text-xs text-gray-500 mb-1">收货地址</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{item.address || '未提供'} {item.zip_code ? `(${item.zip_code})` : ''}</div>
+                <InfoField label="Address" value={`${item.address || 'Not provided'}${item.zip_code ? ` (${item.zip_code})` : ''}`} />
               </div>
             </div>
-          </div>
+          </section>
 
-          <div>
-            <h3 className="text-xs uppercase tracking-wider text-gray-500 mb-3">金额信息</h3>
+          {/* 金额信息 */}
+          <section>
+            <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-hazard-500 rounded-full" />
+              FINANCIAL DETAILS
+            </h3>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">总订单金额</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{formatCurrency(item.order_amount)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">退款/拒付金额</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{formatCurrency(item.refund_amount)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">威胁拒付金额</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{formatCurrency(item.partial_refund_amount)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">是否有货物损失</div>
-                <div className="bg-gray-800 p-2 rounded text-sm">{item.has_cargo_loss ? '❌ 是' : '✅ 否'}</div>
-              </div>
+              <InfoField label="Order Amount" value={formatCurrency(item.order_amount)} mono />
+              <InfoField label="Refund Amount" value={formatCurrency(item.refund_amount)} mono danger />
+              <InfoField label="Partial Refund" value={formatCurrency(item.partial_refund_amount)} mono />
+              <InfoField 
+                label="Cargo Loss" 
+                value={
+                  <span className={item.has_cargo_loss ? 'text-danger-400' : 'text-emerald-400'}>
+                    {item.has_cargo_loss ? 'YES' : 'NO'}
+                  </span>
+                } 
+              />
               {item.has_cargo_loss && (
                 <>
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">货物损失金额</div>
-                    <div className="bg-gray-800 p-2 rounded text-sm">{formatCurrency(item.cargo_loss_amount)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">损失承担方</div>
-                    <div className="bg-gray-800 p-2 rounded text-sm">{item.loss_bearer || '未填写'}</div>
-                  </div>
+                  <InfoField label="Loss Amount" value={formatCurrency(item.cargo_loss_amount)} mono />
+                  <InfoField label="Loss Bearer" value={item.loss_bearer || '-'} />
                 </>
               )}
             </div>
-          </div>
+          </section>
 
+          {/* 证据图片 */}
           {item.evidence_images && item.evidence_images.length > 0 && (
-            <div>
-              <h3 className="text-xs uppercase tracking-wider text-gray-500 mb-3">损失截图</h3>
-              <div className="flex gap-2 flex-wrap">
+            <section>
+              <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 bg-hazard-500 rounded-full" />
+                EVIDENCE ({item.evidence_images.length})
+              </h3>
+              <div className="flex gap-3 flex-wrap">
                 {item.evidence_images.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    className="w-24 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                  <div 
+                    key={i} 
+                    className="w-24 h-24 rounded-lg overflow-hidden border border-surface-700 cursor-pointer hover:border-hazard-500/50 transition-all group"
                     onClick={() => window.open(url)}
-                  />
+                  >
+                    <img src={url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                  </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
+          {/* 关联信息 */}
           {relatedCount > 1 && (
-            <div>
-              <h3 className="text-xs uppercase tracking-wider text-gray-500 mb-3">🔗 关联信息（共 {relatedCount} 条记录）</h3>
-              <div className="space-y-3">
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">关联邮箱</div>
-                  <div className="bg-gray-800 p-2 rounded text-sm">
-                    {item.related_emails?.map(e => `📧 ${e}`).join('\n') || '-'}
+            <section>
+              <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 bg-danger-500 rounded-full" />
+                LINKED RECORDS ({relatedCount})
+              </h3>
+              <div className="space-y-2">
+                {item.related_emails && item.related_emails.length > 0 && (
+                  <div className="p-3 bg-surface-800/50 rounded-lg border border-surface-700">
+                    <div className="text-xs font-mono text-surface-500 mb-1">EMAILS</div>
+                    <div className="font-mono text-sm text-surface-300">{item.related_emails.join(', ')}</div>
                   </div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">关联手机</div>
-                  <div className="bg-gray-800 p-2 rounded text-sm">
-                    {item.related_phones?.map(p => `📱 ${p}`).join('\n') || '-'}
+                )}
+                {item.related_phones && item.related_phones.length > 0 && (
+                  <div className="p-3 bg-surface-800/50 rounded-lg border border-surface-700">
+                    <div className="text-xs font-mono text-surface-500 mb-1">PHONES</div>
+                    <div className="font-mono text-sm text-surface-300">{item.related_phones.join(', ')}</div>
                   </div>
-                </div>
+                )}
               </div>
-            </div>
+            </section>
           )}
 
-          <div>
-            <h3 className="text-xs uppercase tracking-wider text-gray-500 mb-3">举报内容</h3>
-            <div className="bg-gray-800 p-3 rounded">
-              <div className="flex justify-between text-xs text-gray-500 mb-2">
-                <span>举报说明</span>
-                <span>{formatDate(item.created_at)}</span>
+          {/* 举报说明 */}
+          <section>
+            <h3 className="text-xs font-mono font-medium text-surface-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-hazard-500 rounded-full" />
+              REPORT DESCRIPTION
+            </h3>
+            <div className="p-4 bg-surface-800/50 rounded-lg border border-surface-700">
+              <div className="flex justify-between text-xs font-mono text-surface-500 mb-2">
+                <span>Submitted {formatDate(item.created_at)}</span>
               </div>
-              <div className="text-sm leading-relaxed">{item.description || '-'}</div>
+              <p className="text-surface-300 leading-relaxed">{item.description || '-'}</p>
             </div>
+          </section>
+        </div>
+
+        {/* 底部 */}
+        <div className="px-6 py-4 border-t border-surface-800 bg-surface-900/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-mono text-surface-500">
+              <span className="status-dot status-dot-active" />
+              <span>RECORD ID: {item.id}</span>
+            </div>
+            <button
+              onClick={onClose}
+              className="btn-industrial"
+            >
+              CLOSE
+            </button>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function InfoField({ label, value, mono, danger }: { label: string; value: React.ReactNode; mono?: boolean; danger?: boolean }) {
+  return (
+    <div className="p-3 bg-surface-800/30 rounded-lg border border-surface-700/50">
+      <div className="text-xs font-mono text-surface-500 mb-1">{label}</div>
+      <div className={`text-sm ${mono ? 'font-mono' : ''} ${danger ? 'text-danger-400' : 'text-surface-200'}`}>
+        {value}
       </div>
     </div>
   )

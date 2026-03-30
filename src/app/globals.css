@@ -4,34 +4,245 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --radius: 0.5rem;
+    --background: 0 0% 3%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 45 100% 50%;
+    --primary-foreground: 0 0% 5%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 72% 51%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 0 0% 15%;
+    --input: 0 0% 12%;
+    --ring: 45 100% 50%;
+    --radius: 0.375rem;
+  }
+
+  * {
+    @apply border-surface-700;
+  }
+
+  body {
+    @apply bg-surface-950 text-surface-100;
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center center;
+  }
+
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-900;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-500;
+  }
+
+  /* 选择文本 */
+  ::selection {
+    @apply bg-hazard-500/30 text-hazard-100;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+@layer components {
+  /* 警告条纹背景 */
+  .warning-stripes {
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(234, 179, 8, 0.08) 10px,
+      rgba(234, 179, 8, 0.08) 20px
+    );
   }
-  body {
-    @apply bg-background text-foreground;
+
+  /* 危险条纹 */
+  .danger-stripes {
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(239, 68, 68, 0.08) 10px,
+      rgba(239, 68, 68, 0.08) 20px
+    );
   }
+
+  /* 发光边框 */
+  .glow-border {
+    @apply relative;
+  }
+
+  .glow-border::before {
+    content: '';
+    @apply absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300;
+    background: linear-gradient(45deg, theme('colors.hazard.500'), theme('colors.danger.500'));
+    padding: 1px;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .glow-border:hover::before {
+    @apply opacity-100;
+  }
+
+  /* 工业面板 */
+  .industrial-panel {
+    @apply bg-surface-900/80 backdrop-blur-sm border border-surface-700/50 rounded-lg;
+    box-shadow: 
+      0 0 0 1px rgba(0,0,0,0.5),
+      0 4px 20px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  /* 警示标签 */
+  .hazard-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded font-mono text-xs font-bold uppercase tracking-wider;
+  }
+
+  .hazard-badge-critical {
+    @apply bg-danger-500/20 text-danger-400 border border-danger-500/30;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+  }
+
+  .hazard-badge-warning {
+    @apply bg-hazard-500/20 text-hazard-400 border border-hazard-500/30;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.2);
+  }
+
+  .hazard-badge-safe {
+    @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+  }
+
+  /* 工业按钮 */
+  .btn-industrial {
+    @apply relative px-6 py-2.5 font-semibold text-sm uppercase tracking-wider rounded;
+    @apply bg-surface-800 border border-surface-600 text-surface-200;
+    @apply transition-all duration-200 ease-out;
+    @apply hover:bg-surface-700 hover:border-surface-500 hover:text-white;
+    @apply active:scale-[0.98];
+    box-shadow: 
+      0 2px 4px rgba(0,0,0,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  .btn-industrial-primary {
+    @apply bg-hazard-500 border-hazard-600 text-surface-950;
+    @apply hover:bg-hazard-400 hover:border-hazard-500;
+    box-shadow: 
+      0 2px 10px rgba(234, 179, 8, 0.3),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+
+  .btn-industrial-danger {
+    @apply bg-danger-600 border-danger-700 text-white;
+    @apply hover:bg-danger-500 hover:border-danger-600;
+    box-shadow: 
+      0 2px 10px rgba(239, 68, 68, 0.3),
+      inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  /* 工业输入框 */
+  .input-industrial {
+    @apply w-full px-4 py-3 rounded;
+    @apply bg-surface-900 border-2 border-surface-700 text-surface-100;
+    @apply placeholder:text-surface-500;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:border-hazard-500/50 focus:bg-surface-800;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .input-industrial:focus {
+    box-shadow: 
+      inset 0 2px 4px rgba(0,0,0,0.3),
+      0 0 0 3px rgba(234, 179, 8, 0.1);
+  }
+
+  /* 状态指示器 */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-active {
+    @apply bg-emerald-500;
+    animation: pulse 2s infinite;
+  }
+
+  .status-dot-warning {
+    @apply bg-hazard-500;
+    animation: pulse 1.5s infinite;
+  }
+
+  .status-dot-danger {
+    @apply bg-danger-500;
+    animation: pulse 1s infinite;
+  }
+
+  /* 卡片悬停效果 */
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+
+  .card-hover:hover {
+    @apply -translate-y-1;
+    box-shadow: 
+      0 10px 40px rgba(0,0,0,0.4),
+      0 0 0 1px rgba(234, 179, 8, 0.1);
+  }
+
+  /* 模态框 */
+  .modal-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+    @apply bg-black/80 backdrop-blur-sm;
+  }
+
+  .modal-content {
+    @apply bg-surface-900 border border-surface-700 rounded-xl;
+    @apply w-full max-w-2xl max-h-[90vh] overflow-y-auto;
+    box-shadow: 
+      0 25px 50px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  .modal-header {
+    @apply sticky top-0 bg-surface-900/95 backdrop-blur-sm;
+    @apply border-b border-surface-700 px-6 py-4;
+    @apply flex items-center justify-between;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, theme('colors.hazard.400'), theme('colors.danger.500'));
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
