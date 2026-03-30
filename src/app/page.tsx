@@ -7,6 +7,7 @@ import { StatsCards } from '@/components/stats-cards'
 import { SearchForm } from '@/components/search-form'
 import { BlacklistTable } from '@/components/blacklist-table'
 import { ReportFormDialog } from '@/components/report-form'
+import { DetailModal } from '@/components/detail-modal'
 
 export default function HomePage() {
   const [items, setItems] = useState<BlacklistItem[]>([])
@@ -19,8 +20,15 @@ export default function HomePage() {
   const [riskFilter, setRiskFilter] = useState('')
   const [platformFilter, setPlatformFilter] = useState('')
   const [sortBy, setSortBy] = useState('created_at')
+  const [selectedItem, setSelectedItem] = useState<BlacklistItem | null>(null)
+  const [showDetailModal, setShowDetailModal] = useState(false)
 
   const PAGE_SIZE = 10
+
+  const handleViewDetail = (item: BlacklistItem) => {
+    setSelectedItem(item)
+    setShowDetailModal(true)
+  }
 
   const loadData = async () => {
     setLoading(true)
@@ -140,7 +148,7 @@ export default function HomePage() {
           totalPages={totalPages}
           totalRows={totalRows}
           onPageChange={setCurrentPage}
-          onViewDetail={(item) => console.log(item)}
+          onViewDetail={handleViewDetail}
         />
       </main>
 
@@ -151,6 +159,15 @@ export default function HomePage() {
           <p className="mt-1">数据由社区共同维护，仅供参考</p>
         </div>
       </footer>
+
+      {/* 详情模态框 */}
+      {selectedItem && (
+        <DetailModal
+          item={selectedItem}
+          open={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+        />
+      )}
     </div>
   )
 }
