@@ -1,7 +1,7 @@
 'use client'
 
 import { BlacklistItem } from '@/types'
-import { formatDate, maskEmail, maskPhone, maskAddress } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 interface BlacklistTableProps {
   items: BlacklistItem[]
@@ -73,7 +73,7 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#22263a' }}>
-              {['#', '买家姓名', '平台 / ID', '邮箱地址', '电话号码', '收货地址', '风险等级', '举报次数', '最近时间', '操作'].map(h => (
+              {['#', '买家姓名', '平台 / ID', '邮箱地址', '电话号码', '收货地址', '风险等级', '白嫖金额', '举报次数', '最近时间', '操作'].map(h => (
                 <th key={h} className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: '#8b90a7', letterSpacing: '0.5px' }}>
                   {h}
                 </th>
@@ -83,7 +83,7 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
           <tbody>
             {[...Array(5)].map((_, i) => (
               <tr key={i}>
-                {[...Array(10)].map((_, j) => (
+                {[...Array(11)].map((_, j) => (
                   <td key={j} className="px-4 py-4">
                     <div className="skeleton-bar" style={{ width: '80%' }} />
                   </td>
@@ -102,7 +102,7 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#22263a' }}>
-              {['#', '买家姓名', '平台 / ID', '邮箱地址', '电话号码', '收货地址', '风险等级', '举报次数', '最近时间', '操作'].map(h => (
+              {['#', '买家姓名', '平台 / ID', '邮箱地址', '电话号码', '收货地址', '风险等级', '白嫖金额', '举报次数', '最近时间', '操作'].map(h => (
                 <th key={h} className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: '#8b90a7', letterSpacing: '0.5px' }}>
                   {h}
                 </th>
@@ -112,7 +112,7 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-16" style={{ color: '#8b90a7' }}>
+                <td colSpan={11} className="text-center py-16" style={{ color: '#8b90a7' }}>
                   <div className="text-4xl mb-2">🔍</div>
                   <div className="font-bold" style={{ color: '#e8eaf0' }}>未找到相关记录</div>
                   <p className="text-sm mt-1.5">尝试其他关键词，或提交新的举报</p>
@@ -142,21 +142,48 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
                     )}
                   </td>
                   <td className="px-4 py-3.5 text-sm">
-                    <span className="masked" onClick={() => onViewDetail(item)} style={{ color: '#e8eaf0' }}>
-                      {maskEmail(item.email)}
+                    <span 
+                      className="cursor-pointer select-none transition-all duration-200" 
+                      onClick={() => onViewDetail(item)} 
+                      style={{ color: '#e8eaf0', filter: 'blur(4px)' }}
+                      onMouseEnter={e => (e.currentTarget.style.filter = 'blur(0px)')}
+                      onMouseLeave={e => (e.currentTarget.style.filter = 'blur(4px)')}
+                    >
+                      {item.email}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-sm">
-                    <span className="masked" onClick={() => onViewDetail(item)} style={{ color: '#8b90a7' }}>
-                      {maskPhone(item.phone)}
+                    <span 
+                      className="cursor-pointer select-none transition-all duration-200" 
+                      onClick={() => onViewDetail(item)} 
+                      style={{ color: '#8b90a7', filter: 'blur(4px)' }}
+                      onMouseEnter={e => (e.currentTarget.style.filter = 'blur(0px)')}
+                      onMouseLeave={e => (e.currentTarget.style.filter = 'blur(4px)')}
+                    >
+                      {item.phone || '—'}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-sm" style={{ maxWidth: 160 }}>
-                    <span className="masked" onClick={() => onViewDetail(item)} style={{ color: '#8b90a7' }}>
-                      {maskAddress(item.address)}
+                    <span 
+                      className="cursor-pointer select-none transition-all duration-200" 
+                      onClick={() => onViewDetail(item)} 
+                      style={{ color: '#8b90a7', filter: 'blur(4px)' }}
+                      onMouseEnter={e => (e.currentTarget.style.filter = 'blur(0px)')}
+                      onMouseLeave={e => (e.currentTarget.style.filter = 'blur(4px)')}
+                    >
+                      {item.address || '—'}
                     </span>
                   </td>
                   <td className="px-4 py-3.5">{getRiskBadge(item.risk)}</td>
+                  <td className="px-4 py-3.5 text-sm">
+                    {(() => {
+                      const scammed = (item.order_amount || 0) - (item.refund_amount || 0)
+                      if (scammed > 0) {
+                        return <span style={{ color: '#ff6b6b', fontWeight: 600 }}>${scammed.toFixed(2)}</span>
+                      }
+                      return <span style={{ color: '#8b90a7' }}>—</span>
+                    })()}
+                  </td>
                   <td className="px-4 py-3.5">{getReportCountBadge(item.report_count || 1)}</td>
                   <td className="px-4 py-3.5 text-xs" style={{ color: '#8b90a7' }}>
                     {formatDate(item.created_at)}
