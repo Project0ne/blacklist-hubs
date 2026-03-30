@@ -219,33 +219,52 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1117] relative overflow-hidden">
-      {/* 顶部红色渐变光晕 */}
+    <div className="min-h-screen bg-[#0a0c14] relative overflow-hidden">
+      {/* 赛博朋克光晕层 */}
       <div
-        className="pointer-events-none absolute top-0 left-0 w-full h-[600px] z-0"
+        className="pointer-events-none absolute top-0 left-0 w-full h-[700px] z-[1]"
         style={{
-          background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(220,38,38,0.15) 0%, rgba(220,38,38,0.06) 40%, transparent 70%)',
+          background: 'radial-gradient(ellipse 90% 45% at 50% -5%, rgba(220,38,38,0.22) 0%, rgba(180,30,30,0.08) 45%, transparent 70%)',
         }}
       />
       <div
-        className="pointer-events-none absolute top-0 left-[-10%] w-[60%] h-[500px] z-0"
+        className="pointer-events-none absolute top-0 left-[-15%] w-[65%] h-[600px] z-[1]"
         style={{
-          background: 'radial-gradient(ellipse 70% 60% at 30% 0%, rgba(255,80,40,0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 60% 55% at 25% -5%, rgba(255,60,20,0.14) 0%, transparent 65%)',
+        }}
+      />
+      <div
+        className="pointer-events-none absolute top-0 right-[-10%] w-[50%] h-[400px] z-[1]"
+        style={{
+          background: 'radial-gradient(ellipse 50% 50% at 70% 0%, rgba(200,40,80,0.08) 0%, transparent 60%)',
         }}
       />
 
       {/* Header */}
-      <header className="border-b border-gray-800/50 bg-[#0f1117]/95 backdrop-blur-sm sticky top-0 z-40">
+      <header
+        className="sticky top-0 z-40 backdrop-blur-md"
+        style={{
+          background: 'rgba(10,12,20,0.6)',
+          borderBottom: '1px solid rgba(220,38,38,0.15)',
+          boxShadow: '0 1px 20px rgba(220,38,38,0.06), inset 0 -1px 0 rgba(220,38,38,0.1)',
+        }}
+      >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+            <div
+              className="w-10 h-10 rounded-lg flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+                boxShadow: '0 0 20px rgba(220,38,38,0.4), 0 0 6px rgba(220,38,38,0.2)',
+              }}
+            >
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
               </svg>
             </div>
             <h1 className="text-xl font-bold">
               <span className="text-white">外贸</span>
-              <span className="text-red-500">黑名单</span>
+              <span style={{ color: '#ef4444', textShadow: '0 0 20px rgba(239,68,68,0.4)' }}>黑名单</span>
               <span className="text-gray-300">预警平台</span>
             </h1>
           </div>
@@ -284,7 +303,7 @@ export default function HomePage() {
       <section className="py-16 text-center relative z-10">
         <h2 className="text-4xl md:text-5xl font-bold mb-4">
           <span className="text-white">外贸买家</span>
-          <span className="text-red-500 mx-2">风险预警</span>
+          <span className="mx-2" style={{ color: '#ef4444', textShadow: '0 0 30px rgba(239,68,68,0.5), 0 0 60px rgba(239,68,68,0.2)' }}>风险预警</span>
           <span className="text-white">数据库</span>
         </h2>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
