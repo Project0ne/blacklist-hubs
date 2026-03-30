@@ -24,6 +24,7 @@ export default function HomePage() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [dbStatus, setDbStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
+  const [cumulativeAmounts, setCumulativeAmounts] = useState<Record<string, number>>({})
 
   const PAGE_SIZE = 10
 
@@ -71,6 +72,29 @@ export default function HomePage() {
       setItems(data || [])
       setTotalPages(Math.ceil((count || 0) / PAGE_SIZE))
       setTotalRows(count || 0)
+
+      // 查询累计白嫖金额（按 buyer_group_id 聚合）
+      if (data && data.length > 0) {
+        const groupIds = Array.from(new Set(data.map(d => d.buyer_group_id).filter(Boolean)))
+        if (groupIds.length > 0) {
+          const { data: allRelated } = await supabase
+            .from('blacklist')
+            .select('buyer_group_id, order_amount, refund_amount')
+            .eq('status', 'approved')
+            .in('buyer_group_id', groupIds)
+          
+          if (allRelated) {
+            const totals: Record<string, number> = {}
+            for (const r of allRelated) {
+              const gid = r.buyer_group_id
+              if (!gid) continue
+              const scam = (r.order_amount || 0) - (r.refund_amount || 0)
+              totals[gid] = (totals[gid] || 0) + scam
+            }
+            setCumulativeAmounts(totals)
+          }
+        }
+      }
     } catch (error) {
       console.error('加载数据失败:', error)
     } finally {
@@ -162,6 +186,7 @@ export default function HomePage() {
               externalOpen={showReportModal}
               onOpenChange={setShowReportModal}
               onSuccess={() => { loadData(); loadStats(); }}
+              supplementItem={selectedItem}
             />
           </div>
         </div>
@@ -189,6 +214,7 @@ export default function HomePage() {
           currentPage={currentPage}
           totalPages={totalPages}
           totalRows={totalRows}
+          cumulativeAmounts={cumulativeAmounts}
           onPageChange={setCurrentPage}
           onViewDetail={handleViewDetail}
         />

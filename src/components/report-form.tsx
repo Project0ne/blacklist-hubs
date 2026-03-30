@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
+import { BlacklistItem } from '@/types'
 
 interface ReportFormDialogProps {
   onSuccess?: () => void
   externalOpen?: boolean
   onOpenChange?: (open: boolean) => void
+  supplementItem?: BlacklistItem | null
 }
 
-export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: ReportFormDialogProps) {
+export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange, supplementItem }: ReportFormDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open = externalOpen ?? internalOpen
   const setOpen = (value: boolean) => {
@@ -66,7 +68,7 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: Repo
     const platformValue = platform === 'custom' ? customPlatform : platform
     const disputeTypeValue = disputeType === '其他' ? customDisputeType : disputeType
 
-    const payload = {
+    const payload: Record<string, any> = {
       name: formData.get('name') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
@@ -87,6 +89,11 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: Repo
       related_emails: [formData.get('email') as string],
       related_phones: formData.get('phone') ? [formData.get('phone') as string] : [],
       related_addresses: formData.get('address') ? [formData.get('address') as string] : [],
+    }
+
+    // 补充举报时关联同一个 buyer_group_id
+    if (supplementItem?.buyer_group_id) {
+      payload.buyer_group_id = supplementItem.buyer_group_id
     }
 
     try {
@@ -150,7 +157,7 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: Repo
           <section className="space-y-4">
             {/* 第1行：买家姓名 + 平台 */}
             <div className="grid grid-cols-2 gap-4">
-              <FormInput label="买家姓名" name="name" placeholder="买家真实姓名或常用昵称" required />
+              <FormInput label="买家姓名" name="name" placeholder="买家真实姓名或常用昵称" required defaultValue={supplementItem?.name} />
               <div>
                 <label className="block text-sm text-gray-400 mb-2">平台 <span className="text-gray-600">（选填）</span></label>
                 <select 
@@ -188,7 +195,7 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: Repo
 
             {/* 第2行：平台 ID + 邮箱地址 */}
             <div className="grid grid-cols-2 gap-4">
-              <FormInput label="平台 ID" name="platform_id" placeholder="买家在平台上的账号 ID" labelSuffix="（选填）" />
+              <FormInput label="平台 ID" name="platform_id" placeholder="买家在平台上的账号 ID" labelSuffix="（选填）" defaultValue={supplementItem?.platform_id} />
               <div>
                 <label className="block text-sm text-gray-400 mb-2">邮箱地址 <span className="text-red-400">*</span></label>
                 <input 
@@ -196,6 +203,7 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: Repo
                   type="email" 
                   placeholder="buyer@example.com" 
                   required
+                  defaultValue={supplementItem?.email}
                   className="w-full px-4 py-3 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-200 placeholder:text-gray-500 focus:outline-none focus:border-red-500/50 transition"
                 />
                 <p className="text-xs text-gray-500 mt-1">作为买家身份关联的主键</p>
@@ -204,7 +212,7 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: Repo
 
             {/* 第3行：电话号码 + 风险等级 */}
             <div className="grid grid-cols-2 gap-4">
-              <FormInput label="电话号码" name="phone" placeholder="+1 555 000 0000" required />
+              <FormInput label="电话号码" name="phone" placeholder="+1 555 000 0000" required defaultValue={supplementItem?.phone} />
               <div>
                 <label className="block text-sm text-gray-400 mb-2">风险等级 <span className="text-red-400">*</span></label>
                 <div className="flex gap-2">
@@ -237,7 +245,7 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: Repo
             </div>
 
             {/* 第4行：收货地址 */}
-            <FormInput label="收货地址" name="address" placeholder="街道, 城市, 州/省, 邮编, 国家" required />
+            <FormInput label="收货地址" name="address" placeholder="街道, 城市, 州/省, 邮编, 国家" required defaultValue={supplementItem?.address} />
 
             {/* 第5行：纠纷类型（全宽） */}
             <div>
@@ -364,8 +372,8 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange }: Repo
   return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null
 }
 
-function FormInput({ label, name, type = 'text', placeholder, required, step, labelSuffix }: { 
-  label: string; name: string; type?: string; placeholder?: string; required?: boolean; step?: string; labelSuffix?: string 
+function FormInput({ label, name, type = 'text', placeholder, required, step, labelSuffix, defaultValue }: { 
+  label: string; name: string; type?: string; placeholder?: string; required?: boolean; step?: string; labelSuffix?: string; defaultValue?: string | number | null 
 }) {
   return (
     <div>
@@ -379,6 +387,7 @@ function FormInput({ label, name, type = 'text', placeholder, required, step, la
         step={step}
         placeholder={placeholder} 
         required={required}
+        defaultValue={defaultValue ?? undefined}
         className="w-full px-4 py-3 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-200 placeholder:text-gray-500 focus:outline-none focus:border-red-500/50 transition"
       />
     </div>

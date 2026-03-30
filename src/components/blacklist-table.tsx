@@ -9,11 +9,12 @@ interface BlacklistTableProps {
   currentPage: number
   totalPages: number
   totalRows: number
+  cumulativeAmounts?: Record<string, number>
   onPageChange: (page: number) => void
   onViewDetail: (item: BlacklistItem) => void
 }
 
-export function BlacklistTable({ items, loading, currentPage, totalPages, totalRows, onPageChange, onViewDetail }: BlacklistTableProps) {
+export function BlacklistTable({ items, loading, currentPage, totalPages, totalRows, cumulativeAmounts = {}, onPageChange, onViewDetail }: BlacklistTableProps) {
   const getRiskBadge = (risk: string) => {
     const styles: Record<string, { bg: string; color: string; border: string; label: string }> = {
       '高': { bg: 'rgba(232,64,64,0.15)', color: '#ff6b6b', border: 'rgba(232,64,64,0.3)', label: '🔴 高风险' },
@@ -177,9 +178,10 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
                   <td className="px-4 py-3.5">{getRiskBadge(item.risk)}</td>
                   <td className="px-4 py-3.5 text-sm">
                     {(() => {
-                      const scammed = (item.order_amount || 0) - (item.refund_amount || 0)
-                      if (scammed > 0) {
-                        return <span style={{ color: '#ff6b6b', fontWeight: 600 }}>${scammed.toFixed(2)}</span>
+                      const gid = item.buyer_group_id
+                      const cumulative = gid && cumulativeAmounts[gid] != null ? cumulativeAmounts[gid] : (item.order_amount || 0) - (item.refund_amount || 0)
+                      if (cumulative > 0) {
+                        return <span style={{ color: '#ff6b6b', fontWeight: 600 }}>${cumulative.toFixed(2)}</span>
                       }
                       return <span style={{ color: '#8b90a7' }}>—</span>
                     })()}
