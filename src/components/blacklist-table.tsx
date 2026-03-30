@@ -1,20 +1,19 @@
 'use client'
 
-import { BlacklistItem } from '@/types'
+import { MergedBlacklistItem } from '@/types'
 import { formatDate } from '@/lib/utils'
 
 interface BlacklistTableProps {
-  items: BlacklistItem[]
+  items: MergedBlacklistItem[]
   loading: boolean
   currentPage: number
   totalPages: number
   totalRows: number
-  cumulativeAmounts?: Record<string, number>
   onPageChange: (page: number) => void
-  onViewDetail: (item: BlacklistItem) => void
+  onViewDetail: (item: MergedBlacklistItem) => void
 }
 
-export function BlacklistTable({ items, loading, currentPage, totalPages, totalRows, cumulativeAmounts = {}, onPageChange, onViewDetail }: BlacklistTableProps) {
+export function BlacklistTable({ items, loading, currentPage, totalPages, totalRows, onPageChange, onViewDetail }: BlacklistTableProps) {
   const getRiskBadge = (risk: string) => {
     const styles: Record<string, { bg: string; color: string; border: string; label: string }> = {
       '高': { bg: 'rgba(232,64,64,0.15)', color: '#ff6b6b', border: 'rgba(232,64,64,0.3)', label: '🔴 高风险' },
@@ -32,8 +31,7 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
     )
   }
 
-  const getPlatformBadge = (platform: string | undefined) => {
-    if (!platform) return <span style={{ color: '#8b90a7' }}>—</span>
+  const getPlatformBadge = (platform: string) => {
     const colors: Record<string, { border: string; color: string; bg: string }> = {
       'Amazon': { border: '#f90', color: '#f90', bg: 'rgba(255,153,0,0.08)' },
       'eBay': { border: '#4a90e2', color: '#4a90e2', bg: 'rgba(74,144,226,0.08)' },
@@ -44,7 +42,8 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
     const c = colors[platform] || { border: '#2e3350', color: '#8b90a7', bg: '#22263a' }
     return (
       <span
-        className="inline-block px-2 py-0.5 rounded text-[11px]"
+        key={platform}
+        className="inline-block px-2 py-0.5 rounded text-[11px] mr-1 mb-1"
         style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color }}
       >
         {platform}
@@ -68,13 +67,15 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
     )
   }
 
+  const HEADERS = ['#', '买家姓名', '平台 / ID', '邮箱地址', '电话号码', '收货地址', '风险等级', '白嫖金额', '举报次数', '最近时间', '操作']
+
   if (loading) {
     return (
       <div style={{ background: '#1a1d27', border: '1px solid #2e3350', borderRadius: 10, overflow: 'hidden' }}>
         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#22263a' }}>
-              {['#', '买家姓名', '平台 / ID', '邮箱地址', '电话号码', '收货地址', '风险等级', '白嫖金额', '举报次数', '最近时间', '操作'].map(h => (
+              {HEADERS.map(h => (
                 <th key={h} className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: '#8b90a7', letterSpacing: '0.5px' }}>
                   {h}
                 </th>
@@ -103,7 +104,7 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#22263a' }}>
-              {['#', '买家姓名', '平台 / ID', '邮箱地址', '电话号码', '收货地址', '风险等级', '白嫖金额', '举报次数', '最近时间', '操作'].map(h => (
+              {HEADERS.map(h => (
                 <th key={h} className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: '#8b90a7', letterSpacing: '0.5px' }}>
                   {h}
                 </th>
@@ -122,7 +123,7 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
             ) : (
               items.map((item, index) => (
                 <tr
-                  key={item.id}
+                  key={item.buyer_group_id}
                   className="transition-colors duration-150"
                   style={{ borderTop: '1px solid #2e3350' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
@@ -134,12 +135,21 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
                   <td className="px-4 py-3.5">
                     <strong style={{ color: '#e8eaf0' }}>{item.name}</strong>
                     <br />
-                    <span className="text-[11px]" style={{ color: '#8b90a7' }}>{item.dispute_type || ''}</span>
+                    <span className="text-[11px]" style={{ color: '#8b90a7' }}>
+                      {item.dispute_types.join(' · ') || ''}
+                    </span>
                   </td>
                   <td className="px-4 py-3.5">
-                    {getPlatformBadge(item.platform)}
-                    {item.platform_id && (
-                      <span className="block text-[11px] mt-1" style={{ color: '#8b90a7' }}>{item.platform_id}</span>
+                    <div className="flex flex-wrap">
+                      {item.platforms.length > 0
+                        ? item.platforms.map(p => getPlatformBadge(p))
+                        : <span style={{ color: '#8b90a7' }}>—</span>
+                      }
+                    </div>
+                    {item.platform_ids.length > 0 && (
+                      <span className="block text-[11px] mt-1" style={{ color: '#8b90a7' }}>
+                        {item.platform_ids.join(', ')}
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-3.5 text-sm">
@@ -150,8 +160,11 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
                       onMouseEnter={e => (e.currentTarget.style.filter = 'blur(0px)')}
                       onMouseLeave={e => (e.currentTarget.style.filter = 'blur(4px)')}
                     >
-                      {item.email}
+                      {item.emails[0] || '—'}
                     </span>
+                    {item.emails.length > 1 && (
+                      <span className="text-[10px] ml-1" style={{ color: '#8b90a7' }}>+{item.emails.length - 1}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3.5 text-sm">
                     <span 
@@ -161,7 +174,7 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
                       onMouseEnter={e => (e.currentTarget.style.filter = 'blur(0px)')}
                       onMouseLeave={e => (e.currentTarget.style.filter = 'blur(4px)')}
                     >
-                      {item.phone || '—'}
+                      {item.phones[0] || '—'}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-sm" style={{ maxWidth: 160 }}>
@@ -172,21 +185,17 @@ export function BlacklistTable({ items, loading, currentPage, totalPages, totalR
                       onMouseEnter={e => (e.currentTarget.style.filter = 'blur(0px)')}
                       onMouseLeave={e => (e.currentTarget.style.filter = 'blur(4px)')}
                     >
-                      {item.address || '—'}
+                      {item.addresses[0] || '—'}
                     </span>
                   </td>
                   <td className="px-4 py-3.5">{getRiskBadge(item.risk)}</td>
                   <td className="px-4 py-3.5 text-sm">
-                    {(() => {
-                      const gid = item.buyer_group_id
-                      const cumulative = gid && cumulativeAmounts[gid] != null ? cumulativeAmounts[gid] : (item.order_amount || 0) - (item.refund_amount || 0)
-                      if (cumulative > 0) {
-                        return <span style={{ color: '#ff6b6b', fontWeight: 600 }}>${cumulative.toFixed(2)}</span>
-                      }
-                      return <span style={{ color: '#8b90a7' }}>—</span>
-                    })()}
+                    {item.refund_total > 0
+                      ? <span style={{ color: '#ff6b6b', fontWeight: 600 }}>${item.refund_total.toFixed(2)}</span>
+                      : <span style={{ color: '#8b90a7' }}>—</span>
+                    }
                   </td>
-                  <td className="px-4 py-3.5">{getReportCountBadge(item.report_count || 1)}</td>
+                  <td className="px-4 py-3.5">{getReportCountBadge(item.report_count)}</td>
                   <td className="px-4 py-3.5 text-xs" style={{ color: '#8b90a7' }}>
                     {formatDate(item.created_at)}
                   </td>

@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { BlacklistItem } from '@/types'
+import { MergedBlacklistItem } from '@/types'
 import { formatDate } from '@/lib/utils'
 
 interface DetailModalProps {
-  item: BlacklistItem
+  item: MergedBlacklistItem
   open: boolean
   onClose: () => void
   onReport?: () => void
@@ -32,8 +32,7 @@ export function DetailModal({ item, open, onClose, onReport }: DetailModalProps)
     )
   }
 
-  const getPlatformBadge = (platform: string | undefined) => {
-    if (!platform) return <span style={{ color: '#8b90a7' }}>—</span>
+  const getPlatformBadge = (platform: string) => {
     const colors: Record<string, { border: string; color: string; bg: string }> = {
       'Amazon': { border: '#f90', color: '#f90', bg: 'rgba(255,153,0,0.08)' },
       'eBay': { border: '#4a90e2', color: '#4a90e2', bg: 'rgba(74,144,226,0.08)' },
@@ -44,15 +43,14 @@ export function DetailModal({ item, open, onClose, onReport }: DetailModalProps)
     const c = colors[platform] || { border: '#2e3350', color: '#8b90a7', bg: '#22263a' }
     return (
       <span
-        className="inline-block px-2 py-0.5 rounded text-[11px]"
+        key={platform}
+        className="inline-block px-2 py-0.5 rounded text-[11px] mr-1"
         style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color }}
       >
         {platform}
       </span>
     )
   }
-
-  const relatedEmails = item.related_emails || []
 
   return (
     <div
@@ -88,10 +86,26 @@ export function DetailModal({ item, open, onClose, onReport }: DetailModalProps)
             <div className="grid grid-cols-2 gap-2.5">
               <DetailItem label="买家姓名" value={item.name} />
               <DetailItem label="风险等级" value={getRiskBadge(item.risk)} />
-              <DetailItem label="平台" value={<>{getPlatformBadge(item.platform)}{item.platform_id ? <span className="ml-2">{item.platform_id}</span> : null}</>} />
-              <DetailItem label="纠纷类型" value={item.dispute_type || '—'} />
-              <DetailItem label="举报次数" value={`${item.report_count || 1} 次`} />
-              <DetailItem label="最近举报" value={formatDate(item.created_at)} />
+              <DetailItem label="平台" value={
+                item.platforms.length > 0 
+                  ? <div className="flex flex-wrap gap-1">{item.platforms.map(p => getPlatformBadge(p))}</div>
+                  : '—'
+              } />
+              <DetailItem label="纠纷类型" value={
+                item.dispute_types.length > 0 
+                  ? <div className="flex flex-wrap gap-1">{item.dispute_types.map((dt, i) => (
+                      <span key={i} className="inline-block px-2 py-0.5 rounded text-[11px]" style={{ background: 'rgba(232,64,64,0.1)', border: '1px solid rgba(232,64,64,0.2)', color: '#ff6b6b' }}>
+                        {dt}
+                      </span>
+                    ))}</div>
+                  : '—'
+              } />
+              <DetailItem label="举报次数" value={`${item.report_count} 次`} />
+              <DetailItem label="白嫖金额" value={
+                item.refund_total > 0 
+                  ? <span style={{ color: '#ff6b6b', fontWeight: 600 }}>${item.refund_total.toFixed(2)}</span>
+                  : '—'
+              } />
             </div>
           </div>
 
@@ -102,21 +116,21 @@ export function DetailModal({ item, open, onClose, onReport }: DetailModalProps)
               <div className="flex-1 h-px" style={{ background: '#2e3350' }} />
             </div>
             <div className="grid grid-cols-2 gap-2.5">
-              <DetailItem label="邮箱地址" value={item.email} />
-              <DetailItem label="电话号码" value={item.phone || '未提供'} />
-              <DetailItem label="收货地址" value={item.address || '未提供'} full />
+              <DetailItem label="邮箱地址" value={item.emails.join(', ')} />
+              <DetailItem label="电话号码" value={item.phones.join(', ') || '未提供'} />
+              <DetailItem label="收货地址" value={item.addresses.join(' | ') || '未提供'} full />
             </div>
           </div>
 
           {/* 关联账号 */}
-          {relatedEmails.length > 0 && (
+          {item.emails.length > 0 && (
             <div className="mb-5">
               <div className="flex items-center gap-1.5 mb-2.5">
                 <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: '#8b90a7', letterSpacing: 1 }}>关联账号</span>
                 <div className="flex-1 h-px" style={{ background: '#2e3350' }} />
               </div>
               <div className="flex gap-1.5 flex-wrap mt-2">
-                {relatedEmails.map((e, i) => (
+                {item.emails.map((e, i) => (
                   <span
                     key={i}
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs"
@@ -129,25 +143,46 @@ export function DetailModal({ item, open, onClose, onReport }: DetailModalProps)
             </div>
           )}
 
-          {/* 举报内容 */}
+          {/* 举报记录（按每条记录显示） */}
           <div>
             <div className="flex items-center gap-1.5 mb-2.5">
-              <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: '#8b90a7', letterSpacing: 1 }}>举报内容</span>
+              <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: '#8b90a7', letterSpacing: 1 }}>举报内容（{item.records.length} 条）</span>
               <div className="flex-1 h-px" style={{ background: '#2e3350' }} />
             </div>
-            <div style={{ background: '#22263a', border: '1px solid #2e3350', borderRadius: 7, padding: '12px 14px' }}>
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-semibold" style={{ color: '#e8eaf0' }}>举报说明</span>
-                <span className="text-[11px]" style={{ color: '#8b90a7' }}>{formatDate(item.created_at)}</span>
-              </div>
-              <p className="text-sm leading-relaxed" style={{ color: '#e8eaf0' }}>
-                {item.description || '—'}
-              </p>
+            <div className="space-y-3">
+              {item.records.map((record, idx) => (
+                <div key={record.id} style={{ background: '#22263a', border: '1px solid #2e3350', borderRadius: 7, padding: '12px 14px' }}>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold" style={{ color: '#e8eaf0' }}>举报 #{idx + 1}</span>
+                      {record.platform && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,153,0,0.1)', color: '#f5a623' }}>
+                          {record.platform}
+                        </span>
+                      )}
+                      {record.dispute_type && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(232,64,64,0.1)', color: '#ff6b6b' }}>
+                          {record.dispute_type}
+                        </span>
+                      )}
+                      {record.refund_amount && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(232,64,64,0.1)', color: '#ff6b6b' }}>
+                          ${record.refund_amount.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px]" style={{ color: '#8b90a7' }}>{formatDate(record.created_at)}</span>
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color: '#e8eaf0' }}>
+                    {record.description || '—'}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* 证据截图 */}
-          {item.evidence_images && item.evidence_images.length > 0 && (
+          {item.evidence_images.length > 0 && (
             <div className="mt-5">
               <div className="flex items-center gap-1.5 mb-2.5">
                 <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: '#8b90a7', letterSpacing: 1 }}>证据截图</span>

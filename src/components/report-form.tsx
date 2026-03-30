@@ -80,9 +80,7 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange, supple
       dispute_type: disputeTypeValue,
       description: formData.get('description') as string,
       reporter_email: formData.get('reporter_email') as string || null,
-      order_amount: parseFloat(formData.get('order_amount') as string) || null,
       refund_amount: parseFloat(formData.get('refund_amount') as string) || null,
-      loss_bearer: formData.get('loss_bearer') as string || null,
       evidence_images: uploadedImages.length > 0 ? uploadedImages : null,
       status: 'pending',
       report_count: 1,
@@ -94,6 +92,19 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange, supple
     // 补充举报时关联同一个 buyer_group_id
     if (supplementItem?.buyer_group_id) {
       payload.buyer_group_id = supplementItem.buyer_group_id
+    } else {
+      // 新举报时自动查找相同邮箱的已有记录，关联 buyer_group_id
+      try {
+        const { data: existing } = await supabase
+          .from('blacklist')
+          .select('buyer_group_id')
+          .eq('email', formData.get('email') as string)
+          .not('buyer_group_id', 'is', null)
+          .limit(1)
+        if (existing && existing.length > 0 && existing[0].buyer_group_id) {
+          payload.buyer_group_id = existing[0].buyer_group_id
+        }
+      } catch {} // 查询失败不影响提交
     }
 
     try {
@@ -284,20 +295,8 @@ export function ReportFormDialog({ onSuccess, externalOpen, onOpenChange, supple
 
           {/* 金额信息 */}
           <section>
-            <h3 className="text-sm font-medium text-gray-300 mb-4">💰 金额信息（选填）</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <FormInput label="总订单金额" name="order_amount" type="number" step="0.01" placeholder="$ 0.00" />
-              <FormInput label="退款/拒付金额" name="refund_amount" type="number" step="0.01" placeholder="$ 0.00" />
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">损失承担方</label>
-                <select name="loss_bearer" className="w-full px-4 py-3 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:border-red-500/50">
-                  <option value="">请选择</option>
-                  <option value="自己承担">自己承担</option>
-                  <option value="平台承担">平台承担</option>
-                  <option value="部分承担">部分承担</option>
-                </select>
-              </div>
-            </div>
+            <h3 className="text-sm font-medium text-gray-300 mb-4">💰 白嫖金额（选填）</h3>
+            <FormInput label="退款/拒付金额" name="refund_amount" type="number" step="0.01" placeholder="$ 0.00" />
           </section>
 
           {/* 证据图片 */}

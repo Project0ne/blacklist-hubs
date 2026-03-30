@@ -486,9 +486,7 @@ export function AdminPanel() {
                 <InfoField label="电话" value={selectedItem.phone || '未提供'} />
                 <div className="col-span-2"><InfoField label="地址" value={selectedItem.address || '未提供'} /></div>
                 <InfoField label="总订单金额" value={formatCurrency(selectedItem.order_amount)} />
-                <InfoField label="退款/拒付金额" value={formatCurrency(selectedItem.refund_amount)} highlight />
-                <InfoField label="白嫖金额" value={selectedItem.order_amount && selectedItem.refund_amount ? `$${((selectedItem.order_amount || 0) - (selectedItem.refund_amount || 0)).toFixed(2)}` : '-'} highlight />
-                <InfoField label="损失承担方" value={selectedItem.loss_bearer || '-'} />
+                <InfoField label="退款/拒付金额（白嫖）" value={formatCurrency(selectedItem.refund_amount)} highlight />
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">举报说明</label>

@@ -56,3 +56,22 @@ export interface Stats {
   pending: number
   todayNew: number
 }
+
+export interface MergedBlacklistItem {
+  id: number
+  name: string
+  buyer_group_id: string
+  platforms: string[]
+  platform_ids: string[]
+  emails: string[]
+  phones: string[]
+  addresses: string[]
+  risk: '高' | '中' | '低'
+  dispute_types: string[]
+  refund_total: number
+  report_count: number
+  evidence_images: string[]
+  created_at: string
+  status: 'pending' | 'approved' | 'rejected'
+  records: BlacklistItem[]
+}

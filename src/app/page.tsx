@@ -1,30 +1,63 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
-import { BlacklistItem, Stats } from '@/types'
+import { BlacklistItem, Stats, MergedBlacklistItem } from '@/types'
 import { StatsCards } from '@/components/stats-cards'
 import { SearchForm } from '@/components/search-form'
 import { BlacklistTable } from '@/components/blacklist-table'
 import { ReportFormDialog } from '@/components/report-form'
 import { DetailModal } from '@/components/detail-modal'
 
+function mergeByBuyerGroup(items: BlacklistItem[]): MergedBlacklistItem[] {
+  const groups: Record<string, BlacklistItem[]> = {}
+  for (const item of items) {
+    const key = item.buyer_group_id || `solo_${item.id}`
+    if (!groups[key]) groups[key] = []
+    groups[key].push(item)
+  }
+
+  return Object.entries(groups).map(([gid, records]) => {
+    records.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    const latest = records[0]
+
+    const uniqueFilter = <T,>(arr: (T | undefined | null)[]): T[] =>
+      Array.from(new Set(arr.filter((v): v is T => v != null && v !== '')))
+
+    return {
+      id: latest.id,
+      name: latest.name,
+      buyer_group_id: gid,
+      platforms: uniqueFilter(records.map(r => r.platform)),
+      platform_ids: uniqueFilter(records.map(r => r.platform_id)),
+      emails: uniqueFilter(records.map(r => r.email)),
+      phones: uniqueFilter(records.map(r => r.phone)),
+      addresses: uniqueFilter(records.map(r => r.address)),
+      risk: records.some(r => r.risk === '高') ? '高' : records.some(r => r.risk === '中') ? '中' : '低',
+      dispute_types: uniqueFilter(records.map(r => r.dispute_type)),
+      refund_total: records.reduce((sum, r) => sum + (r.refund_amount || 0), 0),
+      report_count: records.length,
+      evidence_images: records.flatMap(r => r.evidence_images || []),
+      created_at: latest.created_at,
+      status: latest.status,
+      records,
+    }
+  })
+}
+
 export default function HomePage() {
-  const [items, setItems] = useState<BlacklistItem[]>([])
+  const [allItems, setAllItems] = useState<BlacklistItem[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, highRisk: 0, pending: 0, todayNew: 0 })
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalRows, setTotalRows] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
   const [riskFilter, setRiskFilter] = useState('')
   const [platformFilter, setPlatformFilter] = useState('')
   const [sortBy, setSortBy] = useState('created_at')
-  const [selectedItem, setSelectedItem] = useState<BlacklistItem | null>(null)
+  const [selectedMergedItem, setSelectedMergedItem] = useState<MergedBlacklistItem | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [dbStatus, setDbStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
-  const [cumulativeAmounts, setCumulativeAmounts] = useState<Record<string, number>>({})
 
   const PAGE_SIZE = 10
 
@@ -38,27 +71,14 @@ export default function HomePage() {
     }
   }
 
-  const handleViewDetail = (item: BlacklistItem) => {
-    setSelectedItem(item)
-    setShowDetailModal(true)
-  }
-
-  const handleSupplementReport = () => {
-    setShowReportModal(true)
-  }
-
   const loadData = async () => {
     setLoading(true)
     try {
-      const from = (currentPage - 1) * PAGE_SIZE
-      const to = from + PAGE_SIZE - 1
-
       let query = supabase
         .from('blacklist')
-        .select('*', { count: 'exact' })
+        .select('*')
         .eq('status', 'approved')
-        .order(sortBy, { ascending: false })
-        .range(from, to)
+        .order('created_at', { ascending: false })
 
       if (riskFilter) query = query.eq('risk', riskFilter)
       if (platformFilter) query = query.eq('platform', platformFilter)
@@ -66,41 +86,38 @@ export default function HomePage() {
         query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`)
       }
 
-      const { data, count, error } = await query
+      const { data, error } = await query
       if (error) throw error
 
-      setItems(data || [])
-      setTotalPages(Math.ceil((count || 0) / PAGE_SIZE))
-      setTotalRows(count || 0)
-
-      // 查询累计白嫖金额（按 buyer_group_id 聚合）
-      if (data && data.length > 0) {
-        const groupIds = Array.from(new Set(data.map(d => d.buyer_group_id).filter(Boolean)))
-        if (groupIds.length > 0) {
-          const { data: allRelated } = await supabase
-            .from('blacklist')
-            .select('buyer_group_id, order_amount, refund_amount')
-            .eq('status', 'approved')
-            .in('buyer_group_id', groupIds)
-          
-          if (allRelated) {
-            const totals: Record<string, number> = {}
-            for (const r of allRelated) {
-              const gid = r.buyer_group_id
-              if (!gid) continue
-              const scam = (r.order_amount || 0) - (r.refund_amount || 0)
-              totals[gid] = (totals[gid] || 0) + scam
-            }
-            setCumulativeAmounts(totals)
-          }
-        }
-      }
+      setAllItems(data || [])
     } catch (error) {
       console.error('加载数据失败:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  // 合并 + 客户端分页
+  const mergedItems = useMemo(() => mergeByBuyerGroup(allItems), [allItems])
+
+  const sortedMerged = useMemo(() => {
+    const arr = [...mergedItems]
+    if (sortBy === 'report_count') {
+      arr.sort((a, b) => b.report_count - a.report_count)
+    } else if (sortBy === 'risk') {
+      const riskOrder: Record<string, number> = { '高': 3, '中': 2, '低': 1 }
+      arr.sort((a, b) => (riskOrder[b.risk] || 0) - (riskOrder[a.risk] || 0))
+    }
+    // default: already sorted by created_at
+    return arr
+  }, [mergedItems, sortBy])
+
+  const totalPages = Math.ceil(sortedMerged.length / PAGE_SIZE)
+  const totalRows = sortedMerged.length
+  const pagedItems = useMemo(() => {
+    const from = (currentPage - 1) * PAGE_SIZE
+    return sortedMerged.slice(from, from + PAGE_SIZE)
+  }, [sortedMerged, currentPage])
 
   const loadStats = async () => {
     try {
@@ -134,14 +151,27 @@ export default function HomePage() {
       loadData()
       loadStats()
     }
-  }, [dbStatus, currentPage, searchQuery, riskFilter, platformFilter, sortBy])
+  }, [dbStatus, searchQuery, riskFilter, platformFilter, sortBy])
+
+  // 当筛选变化时重置页码
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, riskFilter, platformFilter, sortBy])
 
   const handleSearch = (query: string, risk: string, platform: string, sort: string) => {
     setSearchQuery(query)
     setRiskFilter(risk)
     setPlatformFilter(platform)
     setSortBy(sort)
-    setCurrentPage(1)
+  }
+
+  const handleViewDetail = (item: MergedBlacklistItem) => {
+    setSelectedMergedItem(item)
+    setShowDetailModal(true)
+  }
+
+  const handleSupplementReport = () => {
+    setShowReportModal(true)
   }
 
   return (
@@ -186,7 +216,7 @@ export default function HomePage() {
               externalOpen={showReportModal}
               onOpenChange={setShowReportModal}
               onSuccess={() => { loadData(); loadStats(); }}
-              supplementItem={selectedItem}
+              supplementItem={selectedMergedItem?.records[0] || null}
             />
           </div>
         </div>
@@ -209,12 +239,11 @@ export default function HomePage() {
         <StatsCards stats={stats} />
         <SearchForm onSearch={handleSearch} />
         <BlacklistTable
-          items={items}
+          items={pagedItems}
           loading={loading}
           currentPage={currentPage}
           totalPages={totalPages}
           totalRows={totalRows}
-          cumulativeAmounts={cumulativeAmounts}
           onPageChange={setCurrentPage}
           onViewDetail={handleViewDetail}
         />
@@ -229,9 +258,9 @@ export default function HomePage() {
       </footer>
 
       {/* 详情模态框 */}
-      {selectedItem && (
+      {selectedMergedItem && (
         <DetailModal
-          item={selectedItem}
+          item={selectedMergedItem}
           open={showDetailModal}
           onClose={() => setShowDetailModal(false)}
           onReport={handleSupplementReport}
