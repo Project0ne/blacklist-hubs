@@ -16,18 +16,18 @@ export function DetailModal({ item, open, onClose, onReport }: DetailModalProps)
   if (!open) return null
 
   const getRiskBadge = (risk: string) => {
-    const styles: Record<string, { bg: string; color: string; border: string; label: string }> = {
-      '高': { bg: 'rgba(232,64,64,0.15)', color: '#ff6b6b', border: 'rgba(232,64,64,0.3)', label: '🔴 高风险' },
-      '中': { bg: 'rgba(245,166,35,0.12)', color: '#f5a623', border: 'rgba(245,166,35,0.3)', label: '🔶 中风险' },
-      '低': { bg: 'rgba(46,204,113,0.1)', color: '#2ecc71', border: 'rgba(46,204,113,0.2)', label: '⚠️ 低风险' },
+    const styles: Record<string, { bg: string; color: string; border: string; icon: string; label: string }> = {
+      '高': { bg: 'rgba(239,68,68,0.18)', color: '#f87171', border: 'rgba(239,68,68,0.4)', icon: '●', label: '高风险' },
+      '中': { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: 'rgba(245,158,11,0.35)', icon: '◆', label: '中风险' },
+      '低': { bg: 'rgba(234,179,8,0.12)', color: '#eab308', border: 'rgba(234,179,8,0.3)', icon: '▲', label: '低风险' },
     }
     const s = styles[risk] || styles['低']
     return (
       <span
-        className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-[20px] text-[11px] font-bold"
+        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold"
         style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}
       >
-        {s.label}
+        <span style={{ fontSize: 10 }}>{s.icon}</span> {s.label}
       </span>
     )
   }

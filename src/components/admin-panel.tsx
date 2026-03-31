@@ -24,6 +24,9 @@ export function AdminPanel() {
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [rejectingId, setRejectingId] = useState<number | null>(null)
+  const [editingItem, setEditingItem] = useState<BlacklistItem | null>(null)
+  const [editForm, setEditForm] = useState<Record<string, any>>({})
+  const [editSaving, setEditSaving] = useState(false)
 
   const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 })
 
@@ -221,6 +224,49 @@ export function AdminPanel() {
       setSelectedIds(new Set(items.map(i => i.id)))
     } else {
       setSelectedIds(new Set())
+    }
+  }
+
+  function openEdit(item: BlacklistItem) {
+    setEditingItem(item)
+    setEditForm({
+      name: item.name || '',
+      email: item.email || '',
+      phone: item.phone || '',
+      address: item.address || '',
+      risk: item.risk || '低',
+      platform: item.platform || '',
+      platform_id: item.platform_id || '',
+      dispute_type: item.dispute_type || '',
+      description: item.description || '',
+      refund_amount: item.refund_amount ?? '',
+    })
+  }
+
+  async function saveEdit() {
+    if (!editingItem) return
+    setEditSaving(true)
+    try {
+      const payload: Record<string, any> = { ...editForm }
+      payload.refund_amount = payload.refund_amount === '' ? null : parseFloat(payload.refund_amount)
+      if (!payload.platform) payload.platform = null
+      if (!payload.platform_id) payload.platform_id = null
+
+      const { error } = await supabase
+        .from('blacklist')
+        .update(payload)
+        .eq('id', editingItem.id)
+
+      if (error) throw error
+
+      alert('✅ 已保存修改')
+      setEditingItem(null)
+      loadData()
+      loadStats()
+    } catch (error: any) {
+      alert('保存失败：' + error.message)
+    } finally {
+      setEditSaving(false)
     }
   }
 
@@ -429,6 +475,9 @@ export function AdminPanel() {
                         <button onClick={() => setSelectedItem(item)} className="p-2 border border-gray-700 rounded hover:border-blue-500 hover:text-blue-400 transition" title="查看">
                           👁
                         </button>
+                        <button onClick={() => openEdit(item)} className="p-2 border border-gray-700 rounded hover:border-yellow-500 hover:text-yellow-400 transition" title="编辑">
+                          ✏️
+                        </button>
                         {item.status !== 'approved' && (
                           <button onClick={() => quickAction(item.id, 'approved')} className="p-2 bg-green-500 rounded hover:bg-green-600 transition" title="通过">
                             ✓
@@ -525,6 +574,62 @@ export function AdminPanel() {
           </div>
         </div>
       )}
+
+      {/* Edit Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setEditingItem(null)}>
+          <div className="bg-[#161822] border border-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[#161822]/95 backdrop-blur-sm border-b border-gray-800 p-5 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">✏️ 编辑 — {editingItem.name}</h2>
+              <button onClick={() => setEditingItem(null)} className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-700 hover:border-red-500 transition">×</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <EditField label="买家姓名" value={editForm.name} onChange={v => setEditForm(f => ({...f, name: v}))} />
+                <EditField label="邮箱" value={editForm.email} onChange={v => setEditForm(f => ({...f, email: v}))} />
+                <EditField label="电话" value={editForm.phone} onChange={v => setEditForm(f => ({...f, phone: v}))} />
+                <EditField label="平台" value={editForm.platform} onChange={v => setEditForm(f => ({...f, platform: v}))} />
+                <EditField label="平台 ID" value={editForm.platform_id} onChange={v => setEditForm(f => ({...f, platform_id: v}))} />
+                <EditField label="纠纷类型" value={editForm.dispute_type} onChange={v => setEditForm(f => ({...f, dispute_type: v}))} />
+                <EditField label="白嫖金额" value={editForm.refund_amount} onChange={v => setEditForm(f => ({...f, refund_amount: v}))} type="number" />
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">风险等级</label>
+                  <div className="flex gap-2">
+                    {(['低', '中', '高'] as const).map(r => {
+                      const sel = editForm.risk === r
+                      const cfg = {
+                        '低': { icon: '▲', selBg: 'bg-yellow-500/20', selBorder: 'border-yellow-500', selText: 'text-yellow-400' },
+                        '中': { icon: '◆', selBg: 'bg-orange-500/20', selBorder: 'border-orange-500', selText: 'text-orange-400' },
+                        '高': { icon: '●', selBg: 'bg-red-500/20', selBorder: 'border-red-500', selText: 'text-red-400' },
+                      }[r]
+                      return (
+                        <button key={r} type="button" onClick={() => setEditForm(f => ({...f, risk: r}))}
+                          className={`flex-1 py-2.5 rounded-lg font-medium transition flex items-center justify-center gap-1.5 text-sm ${sel ? `${cfg.selBg} border ${cfg.selBorder} ${cfg.selText}` : 'bg-[#1a1d27] border border-gray-700 text-gray-400 hover:border-gray-600'}`}
+                        >
+                          <span>{cfg.icon}</span> {r}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className="col-span-2">
+                <EditField label="收货地址" value={editForm.address} onChange={v => setEditForm(f => ({...f, address: v}))} />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">举报说明</label>
+                <textarea value={editForm.description} onChange={e => setEditForm(f => ({...f, description: e.target.value}))} className="w-full px-4 py-3 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:border-red-500/50 min-h-[100px] resize-none" />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">
+                <button onClick={() => setEditingItem(null)} className="px-5 py-2.5 border border-gray-700 rounded-lg text-gray-300 hover:border-gray-600 transition">取消</button>
+                <button onClick={saveEdit} disabled={editSaving} className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition disabled:opacity-50">
+                  {editSaving ? '保存中...' : '保存修改'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -545,6 +650,15 @@ function InfoField({ label, value, highlight }: { label: string; value: React.Re
     <div>
       <div className="text-xs text-gray-500 mb-1">{label}</div>
       <div className={`bg-[#1a1d27] p-2 rounded-lg text-sm ${highlight ? 'text-red-400' : 'text-gray-200'}`}>{value}</div>
+    </div>
+  )
+}
+
+function EditField({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div>
+      <label className="block text-xs text-gray-500 mb-1">{label}</label>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} className="w-full px-4 py-2.5 bg-[#1a1d27] border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:border-red-500/50 text-sm transition" />
     </div>
   )
 }

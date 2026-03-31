@@ -102,6 +102,7 @@ export default function HomePage() {
   const [selectedMergedItem, setSelectedMergedItem] = useState<MergedBlacklistItem | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const [isSupplementing, setIsSupplementing] = useState(false)
   const [dbStatus, setDbStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
 
   const PAGE_SIZE = 10
@@ -223,6 +224,7 @@ export default function HomePage() {
   }
 
   const handleSupplementReport = () => {
+    setIsSupplementing(true)
     setShowReportModal(true)
   }
 
@@ -257,7 +259,7 @@ export default function HomePage() {
           boxShadow: '0 1px 20px rgba(220,38,38,0.06), inset 0 -1px 0 rgba(220,38,38,0.1)',
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -299,9 +301,12 @@ export default function HomePage() {
             </a>
             <ReportFormDialog
               externalOpen={showReportModal}
-              onOpenChange={setShowReportModal}
+              onOpenChange={(open) => {
+                setShowReportModal(open)
+                if (!open) setIsSupplementing(false)
+              }}
               onSuccess={() => { loadData(); loadStats(); }}
-              supplementItem={selectedMergedItem?.records[0] || null}
+              supplementItem={isSupplementing ? (selectedMergedItem?.records[0] || null) : null}
             />
           </div>
         </div>
@@ -320,7 +325,7 @@ export default function HomePage() {
       </section>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 pb-16 relative z-10">
+      <main className="max-w-[1600px] mx-auto px-6 pb-16 relative z-10">
         <StatsCards stats={stats} />
         <SearchForm onSearch={handleSearch} />
         <BlacklistTable
@@ -336,7 +341,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-gray-800/50 py-8">
-        <div className="max-w-7xl mx-auto px-6 text-center text-gray-500 text-sm">
+        <div className="max-w-[1600px] mx-auto px-6 text-center text-gray-500 text-sm">
           <p>外贸黑名单预警平台 · 保护外贸卖家合法权益</p>
           <p className="mt-1">数据由社区共同维护，仅供参考</p>
         </div>
@@ -347,7 +352,9 @@ export default function HomePage() {
         <DetailModal
           item={selectedMergedItem}
           open={showDetailModal}
-          onClose={() => setShowDetailModal(false)}
+          onClose={() => {
+            setShowDetailModal(false)
+          }}
           onReport={handleSupplementReport}
         />
       )}
